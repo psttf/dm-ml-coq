@@ -1,8 +1,11 @@
+
 Inductive BoolFun := 
 | ConstTrue  (x : Prop)
 | ConstFalse (x : Prop)
 | Id (x : Prop)
-| Not (x : Prop).
+| Not (x : Prop)
+| And (x y: BoolFun)
+| Or (x y: BoolFun).
 
 Inductive closClass :=
 | PreservesFalse (x: BoolFun)
@@ -22,7 +25,20 @@ Inductive Close: closClass -> Prop :=
 Definition сompose {BoolFun} (f : BoolFun -> BoolFun) (g: BoolFun -> BoolFun) :=
   fun x: BoolFun => g (f x).
 
-Definition ConstTrueFun := (ConstTrue True).
-Definition ConstFalseFun := (ConstFalse False).
+Definition ConstTrueFun (x: Prop) := ConstTrue x.
+Definition ConstFalseFun (x: Prop) := ConstFalse x.
 Definition IdFun (x : Prop) := Id x.
-Definition NotFun (x: Prop) := Not (not x).
+Definition NotFun (x: Prop) := Not x.
+Definition AndFun (x y: BoolFun) := And x y.
+Definition OrFun (x y: BoolFun) := Or x y.
+
+Fixpoint interpr (f : BoolFun) : Prop :=
+  match f with 
+  
+  | ConstTrue x => True
+  | ConstFalse x => False
+  | Id x => x
+  | Not x => not x
+  | And x y => and (interpr (x : BoolFun)) (interpr (y : BoolFun))
+  | Or x y => or (interpr (x : BoolFun)) (interpr (y : BoolFun))
+end.
