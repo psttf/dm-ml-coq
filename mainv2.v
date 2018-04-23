@@ -50,6 +50,15 @@ Definition IsSelfDualFunc (n: nat) (f : (BoolFunN n)) : Prop :=
   | _ => False
 end.
 
+Definition getComparableSet (n: nat) : list (nat * nat) :=
+  match n with
+  | 2 => (cons (0 , 1) (cons (1 , 2)  (cons (2 , 3) nil) ))
+  | 3 => (cons (0 , 1) (cons (0 , 2)  (cons (0 , 4) ( cons (1 ,3) ( cons (1,5) 
+( cons (2, 3) ( cons (2, 6) ( cons (3, 7)( cons (4 ,5)( cons (4, 6) 
+(cons (5,7) ( cons (6, 7) nil))))))) )))))
+  | _ => nil
+  end.
+
 Definition isMonotoniusFunc (n: nat) (f : (BoolFunN n)) : Prop :=
   
 
