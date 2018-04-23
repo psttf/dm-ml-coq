@@ -35,19 +35,15 @@ end.
 
 Import Lists.List.
 
-Fixpoint IsListSelfDual(v p : list bool): bool :=  
+Fixpoint IsListSelfDual(v p : list bool): Prop :=  
   match v, p with 
-  | Lists.List.nil, Lists.List.nil => true
-  | h::t, f::g => if eqb h f then false else  IsListSelfDual t g
-  | _, _ => false
+  | Lists.List.nil, Lists.List.nil => True
+  | h::t, f::g => if eqb h f then False else  IsListSelfDual t g
+  | _, _ => False
 end.
 
-Definition IsSelfDualFunc (n: nat) (f : (BoolFunN n)) : Prop :=
- let m:= (let x := to_list f in IsListSelfDual x (rev x)) in
-  match m with 
-  | true => True
-  | _ => False
-end.
+Definition IsSelfDualFunc (n: nat) (f : (BoolFunN n)) : Prop := let x := to_list f in IsListSelfDual x (rev x).
+
 
 Definition getComparableSet (n: nat) : list (nat * nat) :=
   match n with
