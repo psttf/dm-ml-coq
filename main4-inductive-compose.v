@@ -50,28 +50,12 @@ induction H.
 induction H0.
 apply preserves.
 unfold compose.
+rewrite e.
+rewrite e0.
+exact eq_refl.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Check Not.
+(*Check Not.
 
 Eval compute in Not(True).
 Eval compute in id(True).
@@ -91,12 +75,6 @@ Print TrueEqTest.
 
 Definition id_preserves_false: preserves_false id := preserves id eq_refl.
 
-
-
-
-
-
-
 Eval compute in compose id id True.
 
 Check eq_refl True.
@@ -104,7 +82,7 @@ Check eq_refl True.
 Print eq_trans.
 
 Check eq_sym.
-
+*)
 
 
 
