@@ -4,7 +4,7 @@ Require Import Bool.Bvector.
 (* Try to represent bool function as list of result, 
 for example conj will represent like {0, 0, 0, 1} *)
 
-Definition BoolFunN (n: nat) := t bool (2^n).
+Definition BoolFunN (n: nat) := t Prop (2^n).
 
 Inductive closClass (n: nat): Type := 
 | PreservesFalse (x: BoolFunN n)
@@ -16,16 +16,28 @@ Inductive closClass (n: nat): Type :=
 Definition сompose {BoolFun} (f : BoolFun -> BoolFun) (g: BoolFun -> BoolFun) :=
   fun x: BoolFun => g (f x).
 
-Definition BoolFun2 (x: t bool 4) := BoolFunN 2.
+Definition BoolFun2 (x: t Prop 4) := BoolFunN 2.
 
-Definition conj := BoolFun2 ([false ; false ; false ; true ]).
+Check BoolFun2.
+
+Check t Prop.
+
+Definition conj := BoolFun2 ([False ; False ; False ; True ]).
+
+Check [False ; False ; False ; True ].
+
+Check conj.
 
 Definition IsPreservesFalseFunc (n: nat) (f : (BoolFunN n)): Prop :=
   match f with
-    | [] => False (* Strange case*)
-    | true :: t => False
-    | false :: t => True
+    | True :: t => False
+    | _ => True
+    (*| False :: t => True*)
 end.
+
+Eval compute in (IsPreservesFalseFunc 2 [False ; False ; False ; True ]).
+
+
 
 Definition IsPreservesTrueFunc (n: nat) (f : (BoolFunN n)): Prop :=
   match f with
@@ -55,8 +67,6 @@ Definition getComparableSet (n: nat) : list (nat * nat) :=
   | _ => nil
   end.
 
-Check fst.
-
 Definition leBool (a b : bool) : bool :=
   match a, b with
   | true, false => false
@@ -71,8 +81,12 @@ Fixpoint isMonotoniusFuncHelp {n: nat} (f : (BoolFunN n)) ( comparation: list (n
   end.
 
 Definition isMonotoniusFunc (n: nat) (f : (BoolFunN n)) : Prop := isMonotoniusFuncHelp f (getComparableSet n).
-  
-(* Определит линейность, ввести понятие системы функций, 
+ 
+Eval compute in (IsPreservesFalseFunc 2 conj).
+(* 
+Как применять эти функции????
+Check isMonotoniusFunc 2 conj - не работает.
+Определит линейность, ввести понятие системы функций, 
 написать проверки на на не принадлежность к классам для системы функций,
 тогда теорема о полноте: T0 -> T1 -> S -> M -> L -> Full.
 А проверка конкретной системы будет ??????*)

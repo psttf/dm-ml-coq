@@ -46,9 +46,10 @@ end.
 | ConstTrue  (x : Prop)
 | ConstFalse (x : Prop)
 | Id (x : Prop)
-| Not (x : Prop)
+| Not (x : Prop)impl
 | And (x y: BoolFun)
 | Or (x y: BoolFun).
+
 Definition ConstTrueFun (x: Prop) := ConstTrue x.
 Definition ConstFalseFun (x: Prop) := ConstFalse x.
 Definition IdFun (x : Prop) := Id x.
