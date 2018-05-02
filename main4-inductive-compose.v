@@ -54,35 +54,22 @@ rewrite e.
 rewrite e0.
 exact eq_refl.
 
+Inductive preserves_true (x: Bool -> Bool) := 
+  preserve_true: (x(True) = True) -> preserves_true x.
 
-(*Check Not.
+Definition preserves_true_is_composed_closed: compose_closed preserves_true.
+apply compose_is_c.
+intros.
+induction H.
+induction H0.
+apply preserve_true.
+unfold compose.
+rewrite e.
+rewrite e0.
+exact eq_refl.
 
-Eval compute in Not(True).
-Eval compute in id(True).
 
-Check True.
 
-Print eq_refl.
-
-Check id(False) = False.
-
-Definition TrueEqTest: (True = True).
-Proof.
-auto.
-Qed.
-
-Print TrueEqTest.
-
-Definition id_preserves_false: preserves_false id := preserves id eq_refl.
-
-Eval compute in compose id id True.
-
-Check eq_refl True.
-
-Print eq_trans.
-
-Check eq_sym.
-*)
 
 
 
