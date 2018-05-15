@@ -7,7 +7,7 @@ Inductive Bool: Prop :=
   True| False.
 
 Inductive ArgSet (n: nat) : Prop:=
-      false_set: ArgSet n
+    | false_set: ArgSet n
     | true_set: ArgSet n
     | other_set: ArgSet n.
 
