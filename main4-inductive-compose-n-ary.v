@@ -71,16 +71,23 @@ Check t Type 0.
 
 Check Forall.
 
-(*
-Inductive ht (IndexedType: nat -> Type) (length: nat) : t nat length -> Type :=
-( *| hnil: ht IndexedType 0 (nil nat)* )
-| hcons: 
-  forall 
-    (i: nat) l indexes (x: IndexedType i),
-    ht IndexedType l indexes -> ht IndexedType (S l) (cons nat (S l) l indexes).
-*)
-
 Check Vector.nth.
+
+Lemma preserves_false_vector: forall {n: nat} {m: nat} (gs: t (t Bool n -> Bool) m),
+  Forall (fun (g: t Bool n -> Bool) => preserves_false n g) gs -> 
+    (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n False) ) gs) = (t_n Bool m False).
+Proof.
+intros.
+induction H.
+auto.
+simpl.
+induction H.
+rewrite e.
+induction map.
+auto.
+rewrite IHForall.
+auto.
+Qed.
 
 Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
   compose_is_c:
@@ -94,36 +101,12 @@ Definition preserves_false_is_composed_closed: compose_closed preserves_false.
 Proof.
 apply compose_is_c.
 intros.
-induction H0.
+induction H.
 apply preserves.
 unfold compose.
-simpl.
-induction H.
-auto.
-
-
-
-
-unfold compose.
-apply preserves.
-
-
-auto.
-
-induction H.
-simpl.
-rewrite e0.
-
-
-induction H0.
-
-induction H.
-rewrite e0.
-rewrite e.
-
-rewrite e.
-rewrite e0.
-exact eq_refl.
+rewrite preserves_false_vector.
+exact e.
+exact H0.
 Qed.
 
 Inductive preserves_true (x: Bool -> Bool) := 
