@@ -159,14 +159,44 @@ Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
     | _, _ => False
     end.
 
+Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
+  match x, y with
+    |[], [] => True
+    | xh :: xt, yh :: yt=>
+        match is_same_bool xh yh with
+          | False => is_same_set xt yt
+          | True => False
+        end
+    | _, _ => False
+    end.
+
+Definition set_bool_vector (n: nat): t ( t Bool n) (2^n) .
+admit.
+
+Inductive preserves_false1 (n: nat) (f: t Bool n -> Bool) := 
+  preserves1: (f(t_n Bool n False) = False) -> preserves_false1 n f.
+
+Inductive revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p)
+  revert: (is_revert_set x y = True) -> revert_set x y.
+
+Inductive self_duality (n: nat) (f: t Bool n -> Bool):=
+  self_dual: Forall2 (is_revert_set (set_bool_vector n) (set_bool_vector n)).
+
+Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
+  compose_is_c:
+    (forall
+      {m: nat} {n: nat}
+      (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
+      (c m f) -> Forall (fun (g: t Bool n -> Bool) => c n g) gs -> (c n (compose f gs))) ->
+        compose_closed c.
+
+
+
 Fixpoint get_next_rev_vect {n: nat} (curr: t Bool n) : t Bool n :=
     match curr with 
       | [] => []
-      | x :: xs => 
-        match is_same_bool x True with
-          | True => append (t_n Bool 1 False) (get_next_rev_vect xs)
-          | False => append (t_n Bool 1 True) xs
-        end
+      | True :: xs => False :: (get_next_rev_vect xs)
+      | False :: xs => True :: xs
   end.
 
 (*Fixpoint get_next_rev_vect {n: nat} (curr: t Bool n) : t Bool n :=
@@ -189,19 +219,11 @@ Fixpoint comparable_pairs {p: nat} (n: nat)(curr: t Bool n) (delt: nat)  (l :t (
         match is_same_bool False (nth curr delt 
   end.
 
-Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
-  compose_is_c:
-    (forall
-      {m: nat} {n: nat}
-      (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
-      (c m f) -> Forall (fun (g: t Bool n -> Bool) => c n g) gs -> (c n (compose f gs))) ->
-        compose_closed c.
 
-Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
-  preserves: (f(t_n Bool n False) = False) -> preserves_false n f.
+
+
     
-Inductive self_duality (n: nat) (f: t Bool n -> Bool):=
-  self_dual: Forall ( fun ,
+
 
 
 
