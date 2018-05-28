@@ -122,6 +122,8 @@ Qed.
 
 Import VectorNotations.
 
+(*for self-duality*)
+
 Definition is_same_bool (x y: Bool) : Bool:=
   match (x, y) with
     | (True, True) => True
@@ -129,34 +131,6 @@ Definition is_same_bool (x y: Bool) : Bool:=
     | (True, False) => False
     | (False, True) => False
   end.
-
-Definition is_not_same_bool (x y: Bool) : Bool:=
-  match (x, y) with
-    | (True, True) => False
-    | (False, False) => False
-    | (True, False) => True
-    | (False, True) => True
-  end.
-
-(*Fixpoint is_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: nat): Bool :=
-    match x with
-    | [] => 
-        match diff with 
-          | S O => True
-          | _ => False
-        end
-    | xh :: xt =>
-        match y with
-          | yh :: yt => 
-              match is_same_bool xh yh with
-                | True => is_comparable_set xt yt (S diff)
-                | False => is_comparable_set xt yt diff
-              end
-          | _ => False
-        end
-    end.*)
-
-
 
 Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
@@ -168,6 +142,14 @@ Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
         end
     | _, _ => False
     end.
+
+Definition is_not_same_bool (x y: Bool) : Bool:=
+  match (x, y) with
+    | (True, True) => False
+    | (False, False) => False
+    | (True, False) => True
+    | (False, True) => True
+  end.
 
 Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
@@ -183,13 +165,15 @@ Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
 Inductive revert_sets {n: nat} (x y: t Bool n):=
   revert: (is_revert_set x y = True) -> revert_sets x y.
 
-Inductive self_duality {n: nat} (f: t Bool n -> Bool):=
+Inductive self_duality (n: nat) (f: t Bool n -> Bool): Prop:=
   self_dual: 
     forall (x y: t ( t Bool n) (2^n)) (xs ys : t Bool n),
-    Forall2 revert_sets x y -> (is_not_same_bool (f xs) (f ys)) = True-> self_duality f .
+    Forall2 revert_sets x y -> (is_not_same_bool (f xs) (f ys)) = True-> self_duality n f .
 
+Definition self_duality_is_composed_closed: compose_closed self_duality.
+admit.
 
-
+(* for monotonous*)
 Definition is_less_bool (x y: Bool) : Bool:=
   match (x, y) with
     | (True, True) => False
@@ -224,25 +208,23 @@ Fixpoint is_first_less_and_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t 
 Inductive first_less_and_comparable_sets {n: nat} (x y: t Bool n):=
   less_comparable: (is_first_less_and_comparable_set x y 0 = True) -> first_less_and_comparable_sets x y.
 
-Inductive monotonous {n: nat} (f: t Bool n -> Bool):=
+Inductive monotonous (n: nat) (f: t Bool n -> Bool): Prop :=
   monotony: forall (x y: t ( t Bool n) (2^n)) (xs ys : t Bool n),
-    Forall2 first_less_and_comparable_sets x y -> (is_less_or_equal_bool (f xs) (f ys) = True )-> monotonous f .
+    Forall2 first_less_and_comparable_sets x y -> (is_less_or_equal_bool (f xs) (f ys) = True )-> monotonous n f .
+
+Definition monotonous_is_composed_closed: compose_closed monotonous.
+admit.
+
+(* for linear*)
+Definition xor (x y: Bool): Bool :=
+  match x, y with
+    | False, False => False
+    | False, True => True
+    | True, False => True
+    | True, True => False
+  end.
 
 
-
-Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
-  compose_is_c:
-    (forall
-      {m: nat} {n: nat}
-      (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
-      (c m f) -> Forall (fun (g: t Bool n -> Bool) => c n g) gs -> (c n (compose f gs))) ->
-        compose_closed c.
-
-
-
-
-
-    
 
 
 
