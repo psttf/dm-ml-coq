@@ -130,7 +130,15 @@ Definition is_same_bool (x y: Bool) : Bool:=
     | (False, True) => False
   end.
 
-Fixpoint is_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: nat): Bool :=
+Definition is_not_same_bool (x y: Bool) : Bool:=
+  match (x, y) with
+    | (True, True) => False
+    | (False, False) => False
+    | (True, False) => True
+    | (False, True) => True
+  end.
+
+(*Fixpoint is_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: nat): Bool :=
     match x with
     | [] => 
         match diff with 
@@ -146,7 +154,9 @@ Fixpoint is_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: 
               end
           | _ => False
         end
-    end.
+    end.*)
+
+
 
 Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
@@ -170,17 +180,55 @@ Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
     | _, _ => False
     end.
 
-Definition set_bool_vector (n: nat): t ( t Bool n) (2^n) .
-admit.
+Inductive revert_sets {n: nat} (x y: t Bool n):=
+  revert: (is_revert_set x y = True) -> revert_sets x y.
 
-Inductive preserves_false1 (n: nat) (f: t Bool n -> Bool) := 
-  preserves1: (f(t_n Bool n False) = False) -> preserves_false1 n f.
+Inductive self_duality {n: nat} (f: t Bool n -> Bool):=
+  self_dual: 
+    forall (x y: t ( t Bool n) (2^n)) (xs ys : t Bool n),
+    Forall2 revert_sets x y -> (is_not_same_bool (f xs) (f ys)) = True-> self_duality f .
 
-Inductive revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p)
-  revert: (is_revert_set x y = True) -> revert_set x y.
 
-Inductive self_duality (n: nat) (f: t Bool n -> Bool):=
-  self_dual: Forall2 (is_revert_set (set_bool_vector n) (set_bool_vector n)).
+
+Definition is_less_bool (x y: Bool) : Bool:=
+  match (x, y) with
+    | (True, True) => False
+    | (False, False) => False
+    | (True, False) => False
+    | (False, True) => True
+  end.
+
+Definition is_less_or_equal_bool (x y: Bool) : Bool:=
+  match (x, y) with
+    | (True, True) => True
+    | (False, False) => True
+    | (True, False) => False
+    | (False, True) => True
+  end.
+
+Fixpoint is_first_less_and_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: nat): Bool :=
+    match x, y with
+    | [], [] => 
+        match diff with 
+          | S O => True
+          | _ => False
+        end
+    | xh :: xt, yh :: yt =>
+         match is_less_bool xh yh with
+            | True => is_first_less_and_comparable_set xt yt (S diff)
+            | False => is_first_less_and_comparable_set xt yt diff
+         end
+     | _, _ => False
+    end.
+
+Inductive first_less_and_comparable_sets {n: nat} (x y: t Bool n):=
+  less_comparable: (is_first_less_and_comparable_set x y 0 = True) -> first_less_and_comparable_sets x y.
+
+Inductive monotonous {n: nat} (f: t Bool n -> Bool):=
+  monotony: forall (x y: t ( t Bool n) (2^n)) (xs ys : t Bool n),
+    Forall2 first_less_and_comparable_sets x y -> (is_less_or_equal_bool (f xs) (f ys) = True )-> monotonous f .
+
+
 
 Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
   compose_is_c:
@@ -190,34 +238,6 @@ Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
       (c m f) -> Forall (fun (g: t Bool n -> Bool) => c n g) gs -> (c n (compose f gs))) ->
         compose_closed c.
 
-
-
-Fixpoint get_next_rev_vect {n: nat} (curr: t Bool n) : t Bool n :=
-    match curr with 
-      | [] => []
-      | True :: xs => False :: (get_next_rev_vect xs)
-      | False :: xs => True :: xs
-  end.
-
-(*Fixpoint get_next_rev_vect {n: nat} (curr: t Bool n) : t Bool n :=
-    match curr with 
-      | [] => []
-      | x :: xs => 
-        match is_same_bool x True with
-          | True => append (t_n Bool 1 False) (get_next_rev_vect xs)
-          | False => append (t_n Bool 1 True) xs
-        end
-  end.*)
-
-cons A x m (t_n A m x)
-
-  
-Fixpoint comparable_pairs {p: nat} (n: nat)(curr: t Bool n) (delt: nat)  (l :t (prod (t Bool n) (t Bool n)) p) :=
-  match is_same_set curr (t_n Bool n True) with
-    | True => l
-    | False => if (delt >= n) then   else
-        match is_same_bool False (nth curr delt 
-  end.
 
 
 
