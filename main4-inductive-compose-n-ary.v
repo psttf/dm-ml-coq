@@ -1,4 +1,5 @@
 Require Import Vector.
+Require Import Arith.
 
 Definition BoolFun := Prop -> Prop.
 
@@ -10,6 +11,9 @@ Fixpoint t_n (A: Type) (n: nat) (x: A): t A n :=
     | O => nil A
     | S m => cons A x m (t_n A m x)
   end.
+
+Check t_n Bool 3 False.
+Eval compute in t_n Bool 3 False.
 
 Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
   preserves: (f(t_n Bool n False) = False) -> preserves_false n f.
@@ -115,3 +119,89 @@ rewrite preserves_true_vector.
 exact e.
 exact H0.
 Qed.
+
+Import VectorNotations.
+
+Definition is_same_bool (x y: Bool) : Bool:=
+  match (x, y) with
+    | (True, True) => True
+    | (False, False) => True
+    | (True, False) => False
+    | (False, True) => False
+  end.
+
+Fixpoint is_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: nat): Bool :=
+    match x with
+    | [] => 
+        match diff with 
+          | S O => True
+          | _ => False
+        end
+    | xh :: xt =>
+        match y with
+          | yh :: yt => 
+              match is_same_bool xh yh with
+                | True => is_comparable_set xt yt (S diff)
+                | False => is_comparable_set xt yt diff
+              end
+          | _ => False
+        end
+    end.
+
+Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
+  match x, y with
+    |[], [] => True
+    | xh :: xt, yh :: yt=>
+        match is_same_bool xh yh with
+          | True => is_same_set xt yt
+          | False => False
+        end
+    | _, _ => False
+    end.
+
+Fixpoint get_next_rev_vect {n: nat} (curr: t Bool n) : t Bool n :=
+    match curr with 
+      | [] => []
+      | x :: xs => 
+        match is_same_bool x True with
+          | True => append (t_n Bool 1 False) (get_next_rev_vect xs)
+          | False => append (t_n Bool 1 True) xs
+        end
+  end.
+
+(*Fixpoint get_next_rev_vect {n: nat} (curr: t Bool n) : t Bool n :=
+    match curr with 
+      | [] => []
+      | x :: xs => 
+        match is_same_bool x True with
+          | True => append (t_n Bool 1 False) (get_next_rev_vect xs)
+          | False => append (t_n Bool 1 True) xs
+        end
+  end.*)
+
+cons A x m (t_n A m x)
+
+  
+Fixpoint comparable_pairs {p: nat} (n: nat)(curr: t Bool n) (delt: nat)  (l :t (prod (t Bool n) (t Bool n)) p) :=
+  match is_same_set curr (t_n Bool n True) with
+    | True => l
+    | False => if (delt >= n) then   else
+        match is_same_bool False (nth curr delt 
+  end.
+
+Inductive compose_closed (c: forall k, (t Bool k -> Bool) -> Prop) :=
+  compose_is_c:
+    (forall
+      {m: nat} {n: nat}
+      (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
+      (c m f) -> Forall (fun (g: t Bool n -> Bool) => c n g) gs -> (c n (compose f gs))) ->
+        compose_closed c.
+
+Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
+  preserves: (f(t_n Bool n False) = False) -> preserves_false n f.
+    
+Inductive self_duality (n: nat) (f: t Bool n -> Bool):=
+  self_dual: Forall ( fun ,
+
+
+
