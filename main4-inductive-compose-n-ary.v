@@ -224,7 +224,37 @@ Definition xor (x y: Bool): Bool :=
     | True, True => False
   end.
 
+Fixpoint is_more_one_true_in_set {n: nat} (x: t Bool n) (diff: nat) : Bool :=
+  match x with   
+    | [] => 
+        match diff with 
+          | O => False
+          | S O => False
+          | _ => True
+        end
+    | xh :: xt =>
+        match is_same_bool xh True with
+          | True => is_more_one_true_in_set xt (S diff)
+          | False => is_more_one_true_in_set xt diff
+        end
+   end.
 
+Fixpoint get_coef_for_set {n: nat} (x: t Bool n): Bool :=
+(* Some third-party code to use this method *)
+  match x with
+    | [] => True
+    | xh :: xt => get_coef_for_set xt
+  end.
+
+Inductive false_coef_for_set {n: nat} (x: t Bool n) :=
+  false_coef: (get_coef_for_set x = False) -> false_coef_for_set x.
+
+Inductive more_one_true_in_set {n: nat} (x: t Bool n):=
+  mote_one_true: (is_more_one_true_in_set x 0 = True) -> more_one_true_in_set x.
+
+Inductive linearity (n: nat) (f: t Bool n -> Bool) : Prop :=
+  linear: forall (x : t (t Bool n) (2^n)) (xs: t Bool n),
+    Forall more_one_true_in_set x -> false_coef_for_set xs -> linearity n f.
 
 
 
