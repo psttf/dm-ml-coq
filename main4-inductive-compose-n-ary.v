@@ -1,6 +1,5 @@
 Require Import Vector.
 Require Import Arith.
-
 Definition BoolFun := Prop -> Prop.
 
 Inductive Bool: Prop :=
@@ -12,8 +11,8 @@ Fixpoint t_n (A: Type) (n: nat) (x: A): t A n :=
     | S m => cons A x m (t_n A m x)
   end.
 
-Check t_n Bool 3 False.
-Eval compute in t_n Bool 3 False.
+(* Check t_n Bool 3 False.
+Eval compute in t_n Bool 3 False.*)
 
 Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
   preserves: (f(t_n Bool n False) = False) -> preserves_false n f.
@@ -171,7 +170,8 @@ Inductive self_duality (n: nat) (f: t Bool n -> Bool): Prop:=
     Forall2 revert_sets x y -> (is_not_same_bool (f xs) (f ys)) = True-> self_duality n f .
 
 Definition self_duality_is_composed_closed: compose_closed self_duality.
-admit.
+Proof.
+
 
 (* for monotonous*)
 Definition is_less_bool (x y: Bool) : Bool:=
@@ -239,15 +239,20 @@ Fixpoint is_more_one_true_in_set {n: nat} (x: t Bool n) (diff: nat) : Bool :=
         end
    end.
 
-Fixpoint get_coef_for_set {n: nat} (x: t Bool n): Bool :=
+
+
+Definition pred_set {n: nat} (x: t Bool n): t Bool n := x.
+
+Fixpoint get_coef_for_set {n: nat} (x: t Bool n) (f: t Bool n -> Bool): Bool :=
 (* Some third-party code to use this method *)
-  match x with
-    | [] => True
-    | xh :: xt => get_coef_for_set xt
+  match is_same_set x (t_n Bool n False) with
+    | True => f (t_n Bool n False)
+    | False => xor (f x) (get_coef_for_set ( pred_set x) f)
   end.
 
-Inductive false_coef_for_set {n: nat} (x: t Bool n) :=
-  false_coef: (get_coef_for_set x = False) -> false_coef_for_set x.
+Inductive false_coef_for_set {n: nat} (x: t Bool n) (f: t Bool n -> Bool) :=
+  false_coef: (get_coef_for_set x f
+ = False) -> false_coef_for_set x.
 
 Inductive more_one_true_in_set {n: nat} (x: t Bool n):=
   mote_one_true: (is_more_one_true_in_set x 0 = True) -> more_one_true_in_set x.
