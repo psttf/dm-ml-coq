@@ -166,12 +166,22 @@ Inductive revert_sets {n: nat} (x y: t Bool n):=
 
 Inductive self_duality (n: nat) (f: t Bool n -> Bool): Prop:=
   self_dual: 
-    forall (x y: t ( t Bool n) (2^n)) (xs ys : t Bool n),
-    Forall2 revert_sets x y -> (is_not_same_bool (f xs) (f ys)) = True-> self_duality n f .
+    (forall (x y: t (t Bool n) (2^n)) (*(xs ys : t Bool n)*),
+    Forall2 (fun (xs ys: t Bool n) => (revert_sets xs ys -> ((is_not_same_bool (f xs) (f ys)) = True) )) x y) -> self_duality n f .
+
 
 Definition self_duality_is_composed_closed: compose_closed self_duality.
 Proof.
-
+apply compose_is_c.
+intros.
+induction H.
+apply self_dual.
+intros.
+unfold compose.
+induction H0.
+simpl.
+admit.
+admit.
 
 (* for monotonous*)
 Definition is_less_bool (x y: Bool) : Bool:=
@@ -190,30 +200,27 @@ Definition is_less_or_equal_bool (x y: Bool) : Bool:=
     | (False, True) => True
   end.
 
-Fixpoint is_first_less_and_comparable_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p) (diff: nat): Bool :=
+Fixpoint is_preced_sets {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
     match x, y with
-    | [], [] => 
-        match diff with 
-          | S O => True
-          | _ => False
-        end
+    | [], [] => True
     | xh :: xt, yh :: yt =>
-         match is_less_bool xh yh with
-            | True => is_first_less_and_comparable_set xt yt (S diff)
-            | False => is_first_less_and_comparable_set xt yt diff
+         match is_less_or_equal_bool xh yh with
+            | True => is_preced_sets xt yt
+            | False => False
          end
      | _, _ => False
     end.
 
-Inductive first_less_and_comparable_sets {n: nat} (x y: t Bool n):=
-  less_comparable: (is_first_less_and_comparable_set x y 0 = True) -> first_less_and_comparable_sets x y.
+Inductive preced_sets {n: nat} (x y: t Bool n):=
+  preced: (is_preced_sets x y = True) -> preced_sets x y.
 
 Inductive monotonous (n: nat) (f: t Bool n -> Bool): Prop :=
-  monotony: forall (x y: t ( t Bool n) (2^n)) (xs ys : t Bool n),
-    Forall2 first_less_and_comparable_sets x y -> (is_less_or_equal_bool (f xs) (f ys) = True )-> monotonous n f .
+  monotony:
+    (forall (x y: t ( t Bool n) (2^n)) (* (xs ys : t Bool n)*),
+    Forall2 (fun (xs ys: t Bool n) => (preced_sets xs ys -> (is_less_or_equal_bool (f xs) (f ys) = True ))) x y)-> monotonous n f .
 
 Definition monotonous_is_composed_closed: compose_closed monotonous.
-admit.
+
 
 (* for linear*)
 Definition xor (x y: Bool): Bool :=
