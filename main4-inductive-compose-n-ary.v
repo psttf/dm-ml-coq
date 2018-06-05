@@ -1,6 +1,5 @@
-Require Import Vector.
+ Require Import Vector.
 Require Import Arith.
-Definition BoolFun := Prop -> Prop.
 
 Inductive Bool: Prop :=
   True: Bool | False: Bool.
@@ -11,45 +10,11 @@ Fixpoint t_n (A: Type) (n: nat) (x: A): t A n :=
     | S m => cons A x m (t_n A m x)
   end.
 
-(* Check t_n Bool 3 False.
-Eval compute in t_n Bool 3 False.*)
-
 Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
   preserves: (f(t_n Bool n False) = False) -> preserves_false n f.
 
-Lemma preserves_false_from_false: forall (n: nat) (f: t Bool n -> Bool) (f_preserves: preserves_false n f),
-  f(t_n Bool n False) = False.
-Proof.
-intros.
-induction f_preserves.
-exact e.
-Qed.
-
 Definition compose {m: nat} {n: nat} (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m) (xs: t Bool n) : Bool :=
   f (map ( fun (g: t Bool n -> Bool) => g xs ) gs).
-
-Lemma comp_rewrite:
-  forall 
-    {m: nat} {n: nat} 
-    (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m) 
-    (xs: t Bool n),
-    (compose f gs xs) = f (map ( fun (g: t Bool n -> Bool) => g xs ) gs).
-Proof.
-intros.
-unfold compose.
-exact eq_refl.
-Qed.
-
-Lemma comp_false_rewrite:
-  forall 
-    {m: nat} {n: nat} 
-    (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
-    (compose f gs (t_n Bool n False)) = f (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n False) ) gs).
-Proof.
-intros.
-apply comp_rewrite.
-Qed.
-
 
 Lemma preserves_false_vector: forall {n: nat} {m: nat} (gs: t (t Bool n -> Bool) m),
   Forall (fun (g: t Bool n -> Bool) => preserves_false n g) gs -> 
@@ -87,6 +52,7 @@ exact e.
 exact H0.
 Qed.
 
+
 Inductive preserves_true (n: nat) (f: t Bool n -> Bool) := 
   preserve_true: (f(t_n Bool n True) = True) -> preserves_true n f.
 
@@ -106,6 +72,7 @@ rewrite IHForall.
 auto.
 Qed.
 
+ 
 
 Definition preserves_true_is_composed_closed: compose_closed preserves_true.
 Proof.
@@ -131,7 +98,7 @@ Definition is_same_bool (x y: Bool) : Bool:=
     | (False, True) => False
   end.
 
-Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
+(*Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
     |[], [] => True
     | xh :: xt, yh :: yt=>
@@ -140,7 +107,7 @@ Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
           | False => False
         end
     | _, _ => False
-    end.
+    end.*)
 
 Definition is_not_same_bool (x y: Bool) : Bool:=
   match (x, y) with
@@ -150,16 +117,24 @@ Definition is_not_same_bool (x y: Bool) : Bool:=
     | (False, True) => True
   end.
 
-Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
+Fixpoint is_revert_set_rec {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
     |[], [] => True
     | xh :: xt, yh :: yt=>
         match is_same_bool xh yh with
-          | False => is_same_set xt yt
+          | False => is_revert_set_rec xt yt
           | True => False
         end
     | _, _ => False
     end.
+
+Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
+   match x, y with
+    |[], [] => False
+    | xh :: xt, yh :: yt=> is_revert_set_rec (xh :: xt) (yh :: yt)
+    | _, _ => False
+   end.
+
 
 Inductive revert_sets {n: nat} (x y: t Bool n):=
   revert: (is_revert_set x y = True) -> revert_sets x y.
@@ -174,13 +149,12 @@ Definition self_duality_is_composed_closed: compose_closed self_duality.
 Proof.
 apply compose_is_c.
 intros.
-induction H.
-apply self_dual.
-intros.
 unfold compose.
 induction H0.
 simpl.
 admit.
+apply self_dual.
+intros.
 admit.
 
 (* for monotonous*)
@@ -216,13 +190,21 @@ Inductive preced_sets {n: nat} (x y: t Bool n):=
 
 Inductive monotonous (n: nat) (f: t Bool n -> Bool): Prop :=
   monotony:
-    (forall (x y: t ( t Bool n) (2^n)) (* (xs ys : t Bool n)*),
-    Forall2 (fun (xs ys: t Bool n) => (preced_sets xs ys -> (is_less_or_equal_bool (f xs) (f ys) = True ))) x y)-> monotonous n f .
+    (forall (x : t ( t Bool n) (2^n)) (* (xs ys : t Bool n)*),
+    Forall2 (fun (xs ys: t Bool n) => (preced_sets xs ys -> (is_less_or_equal_bool (f xs) (f ys) = True ))) x x)-> monotonous n f .
 
 Definition monotonous_is_composed_closed: compose_closed monotonous.
-
-
+Proof.
+apply compose_is_c.
+intros.
+induction H.
+apply monotony.
+intros.
+auto.
+simpl.
+admit.
 (* for linear*)
+(*
 Definition xor (x y: Bool): Bool :=
   match x, y with
     | False, False => False
@@ -247,16 +229,6 @@ Fixpoint is_more_one_true_in_set {n: nat} (x: t Bool n) (diff: nat) : Bool :=
    end.
 
 
-
-Definition pred_set {n: nat} (x: t Bool n): t Bool n := x.
-
-Fixpoint get_coef_for_set {n: nat} (x: t Bool n) (f: t Bool n -> Bool): Bool :=
-(* Some third-party code to use this method *)
-  match is_same_set x (t_n Bool n False) with
-    | True => f (t_n Bool n False)
-    | False => xor (f x) (get_coef_for_set ( pred_set x) f)
-  end.
-
 Inductive false_coef_for_set {n: nat} (x: t Bool n) (f: t Bool n -> Bool) :=
   false_coef: (get_coef_for_set x f
  = False) -> false_coef_for_set x.
@@ -267,7 +239,7 @@ Inductive more_one_true_in_set {n: nat} (x: t Bool n):=
 Inductive linearity (n: nat) (f: t Bool n -> Bool) : Prop :=
   linear: forall (x : t (t Bool n) (2^n)) (xs: t Bool n),
     Forall more_one_true_in_set x -> false_coef_for_set xs -> linearity n f.
-
+*)
 
 
 
