@@ -1,4 +1,4 @@
- Require Import Vector.
+Require Import Vector.
 Require Import Arith.
 
 Inductive Bool: Prop :=
@@ -72,8 +72,6 @@ rewrite IHForall.
 auto.
 Qed.
 
- 
-
 Definition preserves_true_is_composed_closed: compose_closed preserves_true.
 Proof.
 apply compose_is_c.
@@ -139,12 +137,14 @@ Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
 Inductive revert_sets {n: nat} (x y: t Bool n):=
   revert: (is_revert_set x y = True) -> revert_sets x y.
 
+(*
 Inductive self_duality (n: nat) (f: t Bool n -> Bool): Prop:=
   self_dual: 
     (forall (x y: t (t Bool n) (2^n)) (*(xs ys : t Bool n)*),
     Forall2 (fun (xs ys: t Bool n) => (revert_sets xs ys -> ((is_not_same_bool (f xs) (f ys)) = True) )) x y) -> self_duality n f .
+*)
 
-
+(*
 Definition self_duality_is_composed_closed: compose_closed self_duality.
 Proof.
 apply compose_is_c.
@@ -156,6 +156,8 @@ admit.
 apply self_dual.
 intros.
 admit.
+Qed.
+*)
 
 (* for monotonous*)
 Definition is_less_bool (x y: Bool) : Bool:=
@@ -193,6 +195,7 @@ Inductive monotonous (n: nat) (f: t Bool n -> Bool): Prop :=
     (forall (x : t ( t Bool n) (2^n)) (* (xs ys : t Bool n)*),
     Forall2 (fun (xs ys: t Bool n) => (preced_sets xs ys -> (is_less_or_equal_bool (f xs) (f ys) = True ))) x x)-> monotonous n f .
 
+(*
 Definition monotonous_is_composed_closed: compose_closed monotonous.
 Proof.
 apply compose_is_c.
@@ -203,6 +206,7 @@ intros.
 auto.
 simpl.
 admit.
+Qed.
 (* for linear*)
 (*
 Definition xor (x y: Bool): Bool :=
@@ -240,6 +244,90 @@ Inductive linearity (n: nat) (f: t Bool n -> Bool) : Prop :=
   linear: forall (x : t (t Bool n) (2^n)) (xs: t Bool n),
     Forall more_one_true_in_set x -> false_coef_for_set xs -> linearity n f.
 *)
+*)
+
+Definition not (x: Bool) := match x with
+  | True => False
+  | False => True
+end.
+
+Fixpoint not_t {n: nat} (xs: t Bool n) :=
+  map (fun x => not x) xs.
+
+(*
+Inductive dual {n: nat} (f g: t Bool n -> Bool) :=
+  is_dual: (forall (xs: t Bool n), f xs = not (g (not_t xs))) -> dual f g.
+
+Inductive self_dual (n: nat) (f: t Bool n -> Bool) :=
+  is_self_dual: (dual f f) -> self_dual n f.
+
+(*
+Theorem dual_composition: 
+  forall {m: nat} {n: nat} 
+    (f df: t Bool m -> Bool) (gs dgs: t (t Bool n -> Bool) m),
+*)
+
+Theorem self_dual_is_composed_closed: compose_closed self_dual.
+Proof.
+apply compose_is_c.
+intros.
+apply is_self_dual.
+induction H.
+apply is_dual.
+unfold compose.
+*)
+
+Definition dual {n: nat} (f: t Bool n -> Bool) (x: t Bool n) :=
+  not (f (not_t x)).
+
+Fixpoint dual_t {m: nat} {n: nat} (gs: t (t Bool n -> Bool) m) := 
+  map (fun g => dual g) gs.
+
+Inductive self_dual (n: nat) (f: t Bool n -> Bool) :=
+  is_self_dual: (f = dual f) -> self_dual n f.
+
+Require Import Coq.Logic.FunctionalExtensionality.
+
+Theorem dual_composition:
+  forall {m: nat} {n: nat}
+    (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
+    dual(compose f gs) = compose (dual f)(dual_t gs).
+Proof.
+intros.
+unfold compose.
+unfold dual.
+apply functional_extensionality.
+intros.
+apply f_equal.
+apply f_equal.
+induction not_t.
+induction map.
+apply case0.
+exact eq_refl.
+unfold not_t.
+unfold dual_t.
+induction map.
+
+induction map.
+simpl.
+unfold dual.
+induction not.
+.
+.
+unfold map.
 
 
+induction n.
+.
+induction gs.
 
+unfold not_t.
+induction map.
+
+induction map.
+
+unfold not.
+induction eq.
+apply f_equal.
+apply refl_f.
+intro.
