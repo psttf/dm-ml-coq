@@ -251,36 +251,13 @@ Definition not (x: Bool) := match x with
   | False => True
 end.
 
-Fixpoint not_t {n: nat} (xs: t Bool n) :=
+Definition not_t {n: nat} (xs: t Bool n) :=
   map (fun x => not x) xs.
 
-(*
-Inductive dual {n: nat} (f g: t Bool n -> Bool) :=
-  is_dual: (forall (xs: t Bool n), f xs = not (g (not_t xs))) -> dual f g.
+Definition dual {n: nat} (f: t Bool n -> Bool) (xs: t Bool n) :=
+  not (f (not_t xs)).
 
-Inductive self_dual (n: nat) (f: t Bool n -> Bool) :=
-  is_self_dual: (dual f f) -> self_dual n f.
-
-(*
-Theorem dual_composition: 
-  forall {m: nat} {n: nat} 
-    (f df: t Bool m -> Bool) (gs dgs: t (t Bool n -> Bool) m),
-*)
-
-Theorem self_dual_is_composed_closed: compose_closed self_dual.
-Proof.
-apply compose_is_c.
-intros.
-apply is_self_dual.
-induction H.
-apply is_dual.
-unfold compose.
-*)
-
-Definition dual {n: nat} (f: t Bool n -> Bool) (x: t Bool n) :=
-  not (f (not_t x)).
-
-Fixpoint dual_t {m: nat} {n: nat} (gs: t (t Bool n -> Bool) m) := 
+Definition dual_t {m: nat} {n: nat} (gs: t (t Bool n -> Bool) m) := 
   map (fun g => dual g) gs.
 
 Inductive self_dual (n: nat) (f: t Bool n -> Bool) :=
@@ -288,46 +265,81 @@ Inductive self_dual (n: nat) (f: t Bool n -> Bool) :=
 
 Require Import Coq.Logic.FunctionalExtensionality.
 
-Theorem dual_composition:
-  forall {m: nat} {n: nat}
-    (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
-    dual(compose f gs) = compose (dual f)(dual_t gs).
+Lemma compose_assoc {m : nat} {n : nat} {h: Bool -> Bool}:
+  forall (f : t Bool m -> Bool) (gs : t (t Bool n -> Bool) m),
+    (fun xs : t Bool n => h (compose f gs xs)) = compose (fun xs : t Bool m => h (f xs)) gs.
 Proof.
 intros.
 unfold compose.
-unfold dual.
 apply functional_extensionality.
 intros.
 apply f_equal.
 apply f_equal.
-induction not_t.
-induction map.
-apply case0.
-exact eq_refl.
-unfold not_t.
-unfold dual_t.
-induction map.
-
-induction map.
-simpl.
-unfold dual.
-induction not.
-.
-.
-unfold map.
-
-
-induction n.
-.
-induction gs.
-
-unfold not_t.
-induction map.
-
-induction map.
-
-unfold not.
-induction eq.
 apply f_equal.
-apply refl_f.
-intro.
+exact eq_refl.
+Qed.
+
+Lemma involution: forall (x: Bool), not (not x) = x.
+Proof.
+intros.
+unfold not.
+destruct x.
+exact eq_refl.
+exact eq_refl.
+Qed.
+
+Check involution.
+
+Lemma dual_vector {m: nat} {n: nat}:
+  forall (gs : t (t Bool n -> Bool) m) (xs : t Bool n),
+    map (fun g : t Bool n -> Bool => g (not_t xs)) gs =
+      not_t (map (fun g : t Bool n -> Bool => g xs) (dual_t gs)).
+Proof.
+intros.
+unfold dual_t.
+unfold dual.
+unfold not_t.
+induction gs.
+simpl.
+exact eq_refl.
+simpl.
+rewrite involution.
+apply f_equal.
+exact IHgs.
+Qed.
+
+Theorem dual_composition:
+  forall {m: nat} {n: nat}
+    (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m),
+    dual (compose f gs) = compose (dual f) (dual_t gs).
+Proof.
+intros.
+unfold dual.
+unfold compose.
+apply functional_extensionality.
+intros.
+apply f_equal.
+apply f_equal.
+apply dual_vector.
+Qed.
+
+Theorem self_dual_is_compose_closed: compose_closed self_dual.
+Proof.
+apply compose_is_c.
+intros.
+apply is_self_dual.
+rewrite dual_composition.
+apply f_equal2.
+induction H.
+exact e.
+clear H.
+clear f.
+induction H0.
+simpl.
+exact eq_refl.
+simpl.
+induction H.
+destruct e.
+apply f_equal.
+apply IHForall.
+Qed.
