@@ -2,7 +2,7 @@ Require Import Vector.
 Require Import Arith.
 
 Inductive Bool: Prop :=
-  True: Bool | False: Bool.
+  BTrue: Bool | BFalse: Bool.
 
 Fixpoint t_n (A: Type) (n: nat) (x: A): t A n := 
   match n with
@@ -11,14 +11,14 @@ Fixpoint t_n (A: Type) (n: nat) (x: A): t A n :=
   end.
 
 Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
-  preserves: (f(t_n Bool n False) = False) -> preserves_false n f.
+  preserves: (f(t_n Bool n BFalse) = BFalse) -> preserves_false n f.
 
 Definition compose {m: nat} {n: nat} (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m) (xs: t Bool n) : Bool :=
   f (map ( fun (g: t Bool n -> Bool) => g xs ) gs).
 
 Lemma preserves_false_vector: forall {n: nat} {m: nat} (gs: t (t Bool n -> Bool) m),
   Forall (fun (g: t Bool n -> Bool) => preserves_false n g) gs -> 
-    (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n False) ) gs) = (t_n Bool m False).
+    (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n BFalse) ) gs) = (t_n Bool m BFalse).
 Proof.
 intros.
 induction H.
@@ -54,11 +54,11 @@ Qed.
 
 
 Inductive preserves_true (n: nat) (f: t Bool n -> Bool) := 
-  preserve_true: (f(t_n Bool n True) = True) -> preserves_true n f.
+  preserve_true: (f(t_n Bool n BTrue) = BTrue) -> preserves_true n f.
 
 Lemma preserves_true_vector: forall {n: nat} {m: nat} (gs: t (t Bool n -> Bool) m),
   Forall (fun (g: t Bool n -> Bool) => preserves_true n g) gs -> 
-    (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n True) ) gs) = (t_n Bool m True).
+    (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n BTrue) ) gs) = (t_n Bool m BTrue).
 Proof.
 intros.
 induction H.
@@ -90,58 +90,58 @@ Import VectorNotations.
 
 Definition is_same_bool (x y: Bool) : Bool:=
   match (x, y) with
-    | (True, True) => True
-    | (False, False) => True
-    | (True, False) => False
-    | (False, True) => False
+    | (BTrue, BTrue) => BTrue
+    | (BFalse, BFalse) => BTrue
+    | (BTrue, BFalse) => BFalse
+    | (BFalse, BTrue) => BFalse
   end.
 
 (*Fixpoint is_same_set  {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
-    |[], [] => True
+    |[], [] => BTrue
     | xh :: xt, yh :: yt=>
         match is_same_bool xh yh with
-          | True => is_same_set xt yt
-          | False => False
+          | BTrue => is_same_set xt yt
+          | BFalse => BFalse
         end
-    | _, _ => False
+    | _, _ => BFalse
     end.*)
 
 Definition is_not_same_bool (x y: Bool) : Bool:=
   match (x, y) with
-    | (True, True) => False
-    | (False, False) => False
-    | (True, False) => True
-    | (False, True) => True
+    | (BTrue, BTrue) => BFalse
+    | (BFalse, BFalse) => BFalse
+    | (BTrue, BFalse) => BTrue
+    | (BFalse, BTrue) => BTrue
   end.
 
 Fixpoint is_revert_set_rec {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
   match x, y with
-    |[], [] => True
+    |[], [] => BTrue
     | xh :: xt, yh :: yt=>
         match is_same_bool xh yh with
-          | False => is_revert_set_rec xt yt
-          | True => False
+          | BFalse => is_revert_set_rec xt yt
+          | BTrue => BFalse
         end
-    | _, _ => False
+    | _, _ => BFalse
     end.
 
 Definition is_revert_set {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
    match x, y with
-    |[], [] => False
+    |[], [] => BFalse
     | xh :: xt, yh :: yt=> is_revert_set_rec (xh :: xt) (yh :: yt)
-    | _, _ => False
+    | _, _ => BFalse
    end.
 
 
 Inductive revert_sets {n: nat} (x y: t Bool n):=
-  revert: (is_revert_set x y = True) -> revert_sets x y.
+  revert: (is_revert_set x y = BTrue) -> revert_sets x y.
 
 (*
 Inductive self_duality (n: nat) (f: t Bool n -> Bool): Prop:=
   self_dual: 
     (forall (x y: t (t Bool n) (2^n)) (*(xs ys : t Bool n)*),
-    Forall2 (fun (xs ys: t Bool n) => (revert_sets xs ys -> ((is_not_same_bool (f xs) (f ys)) = True) )) x y) -> self_duality n f .
+    Forall2 (fun (xs ys: t Bool n) => (revert_sets xs ys -> ((is_not_same_bool (f xs) (f ys)) = BTrue) )) x y) -> self_duality n f .
 *)
 
 (*
@@ -162,38 +162,38 @@ Qed.
 (* for monotonous*)
 Definition is_less_bool (x y: Bool) : Bool:=
   match (x, y) with
-    | (True, True) => False
-    | (False, False) => False
-    | (True, False) => False
-    | (False, True) => True
+    | (BTrue, BTrue) => BFalse
+    | (BFalse, BFalse) => BFalse
+    | (BTrue, BFalse) => BFalse
+    | (BFalse, BTrue) => BTrue
   end.
 
 Definition is_less_or_equal_bool (x y: Bool) : Bool:=
   match (x, y) with
-    | (True, True) => True
-    | (False, False) => True
-    | (True, False) => False
-    | (False, True) => True
+    | (BTrue, BTrue) => BTrue
+    | (BFalse, BFalse) => BTrue
+    | (BTrue, BFalse) => BFalse
+    | (BFalse, BTrue) => BTrue
   end.
 
 Fixpoint is_preced_sets {n: nat} {p: nat} (x: t Bool n) (y: t Bool p): Bool :=
     match x, y with
-    | [], [] => True
+    | [], [] => BTrue
     | xh :: xt, yh :: yt =>
          match is_less_or_equal_bool xh yh with
-            | True => is_preced_sets xt yt
-            | False => False
+            | BTrue => is_preced_sets xt yt
+            | BFalse => BFalse
          end
-     | _, _ => False
+     | _, _ => BFalse
     end.
 
 Inductive preced_sets {n: nat} (x y: t Bool n):=
-  preced: (is_preced_sets x y = True) -> preced_sets x y.
+  preced: (is_preced_sets x y = BTrue) -> preced_sets x y.
 
 Inductive monotonous (n: nat) (f: t Bool n -> Bool): Prop :=
   monotony:
     (forall (x : t ( t Bool n) (2^n)) (* (xs ys : t Bool n)*),
-    Forall2 (fun (xs ys: t Bool n) => (preced_sets xs ys -> (is_less_or_equal_bool (f xs) (f ys) = True ))) x x)-> monotonous n f .
+    Forall2 (fun (xs ys: t Bool n) => (preced_sets xs ys -> (is_less_or_equal_bool (f xs) (f ys) = BTrue ))) x x)-> monotonous n f .
 
 (*
 Definition monotonous_is_composed_closed: compose_closed monotonous.
@@ -211,34 +211,34 @@ Qed.
 (*
 Definition xor (x y: Bool): Bool :=
   match x, y with
-    | False, False => False
-    | False, True => True
-    | True, False => True
-    | True, True => False
+    | BFalse, BFalse => BFalse
+    | BFalse, BTrue => BTrue
+    | BTrue, BFalse => BTrue
+    | BTrue, BTrue => BFalse
   end.
 
 Fixpoint is_more_one_true_in_set {n: nat} (x: t Bool n) (diff: nat) : Bool :=
   match x with   
     | [] => 
         match diff with 
-          | O => False
-          | S O => False
-          | _ => True
+          | O => BFalse
+          | S O => BFalse
+          | _ => BTrue
         end
     | xh :: xt =>
-        match is_same_bool xh True with
-          | True => is_more_one_true_in_set xt (S diff)
-          | False => is_more_one_true_in_set xt diff
+        match is_same_bool xh BTrue with
+          | BTrue => is_more_one_true_in_set xt (S diff)
+          | BFalse => is_more_one_true_in_set xt diff
         end
    end.
 
 
 Inductive false_coef_for_set {n: nat} (x: t Bool n) (f: t Bool n -> Bool) :=
   false_coef: (get_coef_for_set x f
- = False) -> false_coef_for_set x.
+ = BFalse) -> false_coef_for_set x.
 
 Inductive more_one_true_in_set {n: nat} (x: t Bool n):=
-  mote_one_true: (is_more_one_true_in_set x 0 = True) -> more_one_true_in_set x.
+  mote_one_true: (is_more_one_true_in_set x 0 = BTrue) -> more_one_true_in_set x.
 
 Inductive linearity (n: nat) (f: t Bool n -> Bool) : Prop :=
   linear: forall (x : t (t Bool n) (2^n)) (xs: t Bool n),
@@ -247,8 +247,8 @@ Inductive linearity (n: nat) (f: t Bool n -> Bool) : Prop :=
 *)
 
 Definition not (x: Bool) := match x with
-  | True => False
-  | False => True
+  | BTrue => BFalse
+  | BFalse => BTrue
 end.
 
 Definition not_t {n: nat} (xs: t Bool n) :=
@@ -276,7 +276,7 @@ intros.
 apply f_equal.
 apply f_equal.
 apply f_equal.
-exact eq_refl.
+reflexivity.
 Qed.
 
 Lemma involution: forall (x: Bool), not (not x) = x.
@@ -284,8 +284,8 @@ Proof.
 intros.
 unfold not.
 destruct x.
-exact eq_refl.
-exact eq_refl.
+reflexivity.
+reflexivity.
 Qed.
 
 Check involution.
@@ -301,7 +301,7 @@ unfold dual.
 unfold not_t.
 induction gs.
 simpl.
-exact eq_refl.
+reflexivity.
 simpl.
 rewrite involution.
 apply f_equal.
@@ -336,10 +336,122 @@ clear H.
 clear f.
 induction H0.
 simpl.
-exact eq_refl.
+reflexivity.
 simpl.
 induction H.
 destruct e.
 apply f_equal.
 apply IHForall.
 Qed.
+
+(* curried `and` *)
+Definition and (x y: Bool) : Bool :=
+  match (x, y) with
+    | (BFalse, BFalse) => BFalse
+    | (BFalse, BTrue) => BFalse
+    | (BTrue, BFalse) => BFalse
+    | (BTrue, BTrue) => BTrue
+  end.
+
+(* uncurried `and`, i. e. boolean function and *)
+Definition and_bf (xs: t Bool 2) := and (hd xs) (hd (tl xs)).
+
+(* curried Zhegalkin plus, i. e. boolean function plus *)
+Definition plus (x y: Bool) : Bool:=
+  match (x, y) with
+    | (BFalse, BFalse) => BFalse
+    | (BFalse, BTrue) => BTrue
+    | (BTrue, BFalse) => BTrue
+    | (BTrue, BTrue) => BTrue
+  end.
+
+(* uncurried Zhegalkin plus *)
+Definition plus_bf (xs: t Bool 2) := plus (hd xs) (hd (tl xs)).
+
+(* computes Zhegalkin polynomm for the given coefficients:
+   c is the free coefficient and cs are variable coefficients *)
+Definition compute_polynom {n: nat} (c: Bool) (cs: t Bool n) (xs: t Bool n): Bool :=
+  fold_left
+    (fun (result value: Bool) => plus result value) 
+      c
+       (map2 (fun (c x: Bool) => and c x) cs xs).
+
+Inductive linear (n: nat) (f: t Bool n -> Bool): Prop :=
+  of_coefficients: 
+    forall (c: Bool) (cs: t Bool n),
+      (forall (xs: t Bool n), compute_polynom c cs xs = f xs) 
+        -> linear n f.
+
+Check of_coefficients.
+
+Check caseS' [BTrue; BTrue].
+
+(*
+  Vector_0_is_nil' and Vector_0_is_nil: easier proofs that 0-length vectors are equal to nil
+  see http://coq-club.inria.narkive.com/wrDwvaNY/how-to-prove-that-all-vectors-of-0-length-are-equal-to-vector-nil
+*)
+
+Lemma Vector_0_is_nil' : forall T n (v : Vector.t T n),
+match n return Vector.t T n -> Prop with
+| O => fun v => v = Vector.nil T
+| _ => fun _ => (True: Prop)
+end v.
+Proof.
+destruct v; auto.
+Qed.
+
+Theorem Vector_0_is_nil : forall T (v : Vector.t T 0), v = Vector.nil T.
+Proof.
+intros; apply (Vector_0_is_nil' _ _ v).
+Qed.
+
+(* example proof that Zhegalkin plus has a corresponding polynom *)
+Example plus_bf_has_polynom: forall (xs: t Bool 2), compute_polynom BFalse [BTrue; BTrue] xs = plus_bf xs.
+
+Proof.
+
+intros.
+
+(* first introduce all the xs since it has fixed length *)
+apply (caseS' xs).
+intros.
+clear xs.
+apply (caseS' t).
+clear t.
+intros.
+
+(* the rest of xs is [] *)
+rewrite (Vector_0_is_nil Bool t).
+
+(* unfold all the definitions *)
+unfold compute_polynom.
+unfold plus_bf.
+unfold plus.
+
+(* now enumerate all the xs by destructing h and h0 *)
+destruct h.
+destruct h0.
+simpl.
+reflexivity.
+simpl.
+reflexivity.
+destruct h0.
+simpl.
+reflexivity.
+simpl.
+reflexivity.
+
+Qed.
+
+Example plus_bf_is_linear: linear 2 plus_bf.
+Proof.
+(* propose the polynom that we already know *)
+apply (of_coefficients 2 plus_bf BFalse [BTrue; BTrue]).
+intros.
+apply plus_bf_has_polynom.
+Qed.
+
+Theorem linear_is_compose_closed: compose_closed linear.
+Proof.
+(* Work in Progress *)
+Admitted.
