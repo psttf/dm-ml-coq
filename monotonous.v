@@ -89,7 +89,10 @@ apply eq_refl.*)
 
 induction gs.
 simpl.
+induction xs.
 induction H0.
+rewrite (Vector_0_is_nil Bool ys).
+reflexivity.
 
 
 Qed.
