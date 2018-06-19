@@ -52,6 +52,6 @@ Definition create_false_vector (n: nat) : t Bool n := of_list (create_false_list
 (*Lemma comp_rewrite_lem: forall (f g: t Bool n -> Bool) (x: Bool), (compose f g x) = g (f x).
 intros.
 unfold compose.
-exact eq_refl.
+assumption.
 Qed.*)
 

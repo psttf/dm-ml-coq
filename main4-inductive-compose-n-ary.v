@@ -48,8 +48,8 @@ induction H.
 apply preserves.
 unfold compose.
 rewrite preserves_false_vector.
-exact e.
-exact H0.
+assumption.
+assumption.
 Qed.
 
 
@@ -80,8 +80,8 @@ induction H.
 apply preserve_true.
 unfold compose.
 rewrite preserves_true_vector.
-exact e.
-exact H0.
+assumption.
+assumption.
 Qed.
 
 Import VectorNotations.
@@ -305,7 +305,7 @@ reflexivity.
 simpl.
 rewrite involution.
 apply f_equal.
-exact IHgs.
+assumption.
 Qed.
 
 Theorem dual_composition:
@@ -331,7 +331,7 @@ apply is_self_dual.
 rewrite dual_composition.
 apply f_equal2.
 induction H.
-exact e.
+assumption.
 clear H.
 clear f.
 induction H0.

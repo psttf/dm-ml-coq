@@ -19,7 +19,7 @@ Definition compose (f : Bool -> Bool) (g: Bool -> Bool) :=
 Lemma comp_rewrite_lem: forall (f g: Bool -> Bool) (x: Bool), (compose f g x) = g (f x).
 intros.
 unfold compose.
-exact eq_refl.
+assumption.
 Qed.
 
 Inductive preserves_false (x: Bool -> Bool) := 
@@ -40,7 +40,7 @@ Lemma ppp: forall (f: Bool -> Bool) (f_preserves: preserves_false f),
 Proof.
 intros.
 induction f_preserves.
-exact e.
+assumption.
 Qed.
 
 Definition preserves_false_is_composed_closed: compose_closed preserves_false.
@@ -52,7 +52,7 @@ apply preserves.
 unfold compose.
 rewrite e.
 rewrite e0.
-exact eq_refl.
+assumption.
 
 Inductive preserves_true (x: Bool -> Bool) := 
   preserve_true: (x(True) = True) -> preserves_true x.
@@ -66,7 +66,7 @@ apply preserve_true.
 unfold compose.
 rewrite e.
 rewrite e0.
-exact eq_refl.
+assumption.
 
 
 

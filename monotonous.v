@@ -77,8 +77,8 @@ apply Forall2_nil.
 simpl.
 apply Forall2_cons.
 apply H.
-exact H0.
-exact IHForall.
+assumption.
+assumption.
 Qed.
 
 Theorem monotonous_compose_closed: compose_closed monotonous.
@@ -90,6 +90,6 @@ unfold compose.
 intros.
 apply H.
 apply monoton_vector.
-exact H0.
-exact H1.
+assumption.
+assumption.
 Qed.
