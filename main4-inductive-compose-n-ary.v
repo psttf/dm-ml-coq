@@ -372,7 +372,7 @@ Definition plus_bf (xs: t Bool 2) := plus (hd xs) (hd (tl xs)).
    c is the free coefficient and cs are variable coefficients *)
 Definition compute_polynom {n: nat} (c: Bool) (cs: t Bool n) (xs: t Bool n): Bool :=
   fold_left
-    (fun (result value: Bool) => plus result value) 
+    (fun (result value: Bool) => plus result value)
       c
        (map2 (fun (c x: Bool) => and c x) cs xs).
 
@@ -451,7 +451,178 @@ intros.
 apply plus_bf_has_polynom.
 Qed.
 
+Theorem zero_is_dominant_in_and : forall x, and BFalse x = BFalse.
+Proof.
+intros.
+unfold and.
+destruct x.
+reflexivity.
+reflexivity.
+Qed.
+
+Theorem zero_is_neutral_in_plus : forall x, plus x BFalse = x.
+Proof.
+intros.
+unfold and.
+destruct x.
+reflexivity.
+reflexivity.
+Qed.
+
+Lemma linear_0:
+  forall
+    (h : t Bool 0 -> Bool)
+    (n0 : nat)
+    (gs : t (t Bool 0 -> Bool) n0),
+      (Forall (fun g : t Bool 0 -> Bool => linear 0 g) (h :: gs)) ->
+        ex (fun (gsc: t Bool (S n0)) =>
+          (map (fun g : t Bool 0 -> Bool => g []) (h :: gs)) =
+            gsc
+        ).
+Proof.
+intros.
+induction H.
+simpl.
+exists [].
+reflexivity.
+simpl.
+induction H.
+symmetry in H.
+rewrite H.
+induction IHForall.
+rewrite H1.
+exists (compute_polynom c cs [] :: x0).
+reflexivity.
+Qed.
+
+Lemma linear_n:
+  forall
+    (n : nat)
+    (h : t Bool n -> Bool)
+    (n0 : nat)
+    (gs : t (t Bool n -> Bool) n0),
+      (Forall (fun g : t Bool n -> Bool => linear n g) (h :: gs)) ->
+        ex (fun (gsc : t Bool (S n0)) =>
+          ex (fun (gscs : t (t Bool n) (S n0)) =>
+            forall (xs : t Bool n),
+              (map (fun g : t Bool n -> Bool => g xs) (h :: gs)) =
+                map2 (fun (c: Bool) (cs: t Bool n) => compute_polynom c cs xs) gsc gscs
+          )
+        ).
+Proof.
+intros.
+induction H.
+simpl.
+exists [].
+exists [].
+intros.
+simpl.
+reflexivity.
+simpl.
+induction H.
+symmetry in H.
+induction IHForall.
+exists (compute_polynom c cs [] :: x0).
+reflexivity.
+Qed.
+
 Theorem linear_is_compose_closed: compose_closed linear.
 Proof.
-(* Work in Progress *)
-Admitted.
+apply compose_is_c.
+intros.
+induction H.
+symmetry in H.
+unfold compose.
+
+induction gs.
+
+(* gs = [] *)
+  simpl.
+  apply (of_coefficients n (fun _ : t Bool n => f []) c (t_n Bool n BFalse)).
+  rewrite H.
+  intros.
+  rewrite (Vector_0_is_nil Bool cs).
+  unfold compute_polynom.
+  simpl.
+  induction xs.
+
+  (* xs = [] *)
+    simpl.
+    reflexivity.
+
+  (* xs = h :: xs *)
+    simpl.
+    rewrite zero_is_dominant_in_and.
+    rewrite zero_is_neutral_in_plus.
+    apply IHxs.
+    apply Forall_nil.
+
+(* gs = h :: gs *)
+
+  induction n.
+
+  (* n = 0 *)
+
+  apply (
+    of_coefficients
+      0
+      (fun xs : t Bool 0 => f (map (fun g : t Bool 0 -> Bool => g xs) (h :: gs)))
+      (fold_left (fun x y => plus x y) c )
+      []
+  ).
+  intros.
+  rewrite H.
+  apply f_equal3.
+
+  apply f_equal3.
+  rewrite (Vector_0_is_nil Bool xs).
+  reflexivity.
+
+
+
+  induction n.
+  apply (of_coefficients 0 (fun _ : t Bool 0 => f []) c []).
+  rewrite H.
+  intros.
+  rewrite (Vector_0_is_nil Bool cs).
+  rewrite (Vector_0_is_nil Bool xs).
+  reflexivity.
+
+  apply (of_coefficients (S n) (fun _ : t Bool (S n) => f []) c []).
+  rewrite H.
+
+
+
+  apply f_equal3.
+  reflexivity.
+  symmetry.
+  auto.
+  rewrite (Vector_0_is_nil Bool cs).
+
+
+
+  Check Vector_0_is_nil.
+  apply (case0 Bool).
+  unfold compute_polynom.
+  apply f_equal3.
+
+  rewrite H.
+
+  enough (cc: Bool).
+  enough (ccs: t Bool n).
+  apply (of_coefficients n (compose f gs) cc ccs).
+  intros.
+  unfold compute_polynom.
+  unfold compose.
+
+
+  enough (c: Bool).
+  enough (cs: t Bool n).
+  intros.
+  unfold compute_polynom.
+  unfold compose.
+  intros.
+
+
+  (* Work in Progress *)
+  Admitted.
