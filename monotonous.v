@@ -25,18 +25,18 @@ Definition leq (x y: Bool): Prop:=
   end.
 
 Definition leq_t {n: nat} (xs ys: t Bool n) :=
-  Forall2 (fun (x y: Bool) => leq x y) xs ys.
+  Forall2 (fun (x y: Bool) => (leq x y) = True) xs ys.
 
 Inductive monotonous (n: nat) (f: t Bool n -> Bool): Prop :=
   monotony:
     (forall (xs ys : t Bool n),
-        (((leq_t xs ys) = True) -> (leq (f xs) (f ys) = True ))) -> monotonous n f .
+        ((leq_t xs ys) -> (leq (f xs) (f ys) = True ))) -> monotonous n f .
 Require Import Coq.Logic.FunctionalExtensionality.
 
 Lemma monoton {m: nat} {n: nat}:
   forall (f : t Bool n -> Bool) (xs ys: t Bool n), 
-     monotonous n f ->
-      leq_t xs ys = True ->  
+    monotonous n f ->
+      leq_t xs ys ->
         (leq (f xs) (f ys) = True ).
 Proof.
 intros.
@@ -58,43 +58,27 @@ Proof.
 intros; apply (Vector_0_is_nil' _ _ v).
 Qed.
 
-Lemma monoton_vector_0 {n: nat}: 
-forall (gs : t (t Bool n -> Bool) 0) (xs ys: t Bool n), 
-    Forall (fun (g: t Bool n -> Bool) => monotonous n g) gs ->
-      leq_t xs ys = True ->  
-        (leq_t (map (fun g : t Bool n -> Bool => g xs) gs) 
-          (map (fun g : t Bool n -> Bool => g ys) gs)) = leq_t [] [] .
-Proof.
-intros.
-rewrite (Vector_0_is_nil (t Bool n -> Bool) gs).
-simpl.
-apply eq_refl.
-Qed.
-
 Lemma monoton_vector {m: nat} {n: nat}:
   forall (gs : t (t Bool n -> Bool) m) (xs ys: t Bool n), 
     Forall (fun (g: t Bool n -> Bool) => monotonous n g) gs ->
-      leq_t xs ys = True ->  
-        (leq_t (map (fun g : t Bool n -> Bool => g xs) gs) 
-          (map (fun g : t Bool n -> Bool => g ys) gs)) = True.
+      leq_t xs ys ->
+        leq_t 
+          (map (fun g : t Bool n -> Bool => g xs) gs) 
+          (map (fun g : t Bool n -> Bool => g ys) gs).
 Proof.
 intros.
-(*induction H.
-induction xs.
-simpl.
-elim H0.
-rewrite (Vector_0_is_nil Bool ys).
-apply eq_refl.*)
-
-
 induction gs.
 simpl.
-induction xs.
-induction H0.
-rewrite (Vector_0_is_nil Bool ys).
-reflexivity.
-
-
+unfold leq_t.
+apply Forall2_nil.
+unfold leq_t.
+induction H.
+apply Forall2_nil.
+simpl.
+apply Forall2_cons.
+apply H.
+exact H0.
+exact IHForall.
 Qed.
 
 Theorem monotonous_compose_closed: compose_closed monotonous.
@@ -104,17 +88,8 @@ intros.
 apply monotony.
 unfold compose.
 intros.
+apply H.
 apply monoton_vector.
-
-induction H0.
-simpl.
-induction H.
-unfold leq.
-induction f.
-exact eq_refl.
-exact eq_refl.
-simpl.
-
-
-(*test*)
-
+exact H0.
+exact H1.
+Qed.
