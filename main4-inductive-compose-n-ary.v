@@ -362,7 +362,7 @@ Definition plus (x y: Bool) : Bool:=
     | (BFalse, BFalse) => BFalse
     | (BFalse, BTrue) => BTrue
     | (BTrue, BFalse) => BTrue
-    | (BTrue, BTrue) => BTrue
+    | (BTrue, BTrue) => BFalse
   end.
 
 (* uncurried Zhegalkin plus *)
