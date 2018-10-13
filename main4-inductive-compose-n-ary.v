@@ -140,7 +140,7 @@ Inductive revert_sets {n: nat} (x y: t Bool n):=
 (*
 Inductive self_duality (n: nat) (f: t Bool n -> Bool): Prop:=
   self_dual: 
-    (forall (x y: t (t Bool n) (2^n)) (*(xs ys : t Bool n)*),
+    (forall (x y: t (t Bool n) (2^n)) (xs ys : t Bool n),
     Forall2 (fun (xs ys: t Bool n) => (revert_sets xs ys -> ((is_not_same_bool (f xs) (f ys)) = BTrue) )) x y) -> self_duality n f .
 *)
 
@@ -207,8 +207,7 @@ auto.
 simpl.
 admit.
 Qed.
-(* for linear*)
-(*
+
 Definition xor (x y: Bool): Bool :=
   match x, y with
     | BFalse, BFalse => BFalse
@@ -243,7 +242,7 @@ Inductive more_one_true_in_set {n: nat} (x: t Bool n):=
 Inductive linearity (n: nat) (f: t Bool n -> Bool) : Prop :=
   linear: forall (x : t (t Bool n) (2^n)) (xs: t Bool n),
     Forall more_one_true_in_set x -> false_coef_for_set xs -> linearity n f.
-*)
+
 *)
 
 Definition not (x: Bool) := match x with
