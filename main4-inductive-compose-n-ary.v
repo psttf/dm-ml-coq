@@ -677,24 +677,6 @@ Proof.
   reflexivity. 
 Qed.
 
-(*Lemma map2_distributivity: 
-  forall {n: nat},
-  forall (csf csg cxf cxg: t Bool n),
-  map2 and (map2 plus csf csg) (map2 plus cxf cxg) = 
-  map2 plus (map2 and csf cxf) (map2 and csg cxg).
-  Proof.
-    intros.
-    
-  Qed.
-*)
-
-Theorem map_with_empty:
-  forall (csf: t Bool 0),
-  map2 and csf [] = [].
-    Proof.
-    intros.
-    Admitted.
-
 Theorem poly_plus_poly_is_poly: 
   forall {n: nat},
   forall (csf csg xs: t Bool n),
@@ -710,34 +692,22 @@ Proof.
   rewrite (Vector_0_is_nil Bool xs).
   simpl.
   reflexivity.
-  apply (caseS' xs).
   apply (caseS' csf).
-
   apply (caseS' csg).
-
-  rewrite -> map_with_empty.
-  rewrite -> map_with_empty.
-  rewrite -> map_with_empty.
+  apply (caseS' xs).
+  intros.
   simpl.
-  reflexivity.
-  
-  unfold rect2.
-simpl.
-  rewrite -> fold_associativity.
-simpl.
-
-  destruct cf, cg.
-  unfold plus at 5.
-  simpl.
-  rewrite -> fold_associativity.
   rewrite -> plus_associativity. 
-  rewrite <- plus_commutativity. 
-  
-  rewrite -> fold_associativity at 2. 
-  rewrite -> plus_commutativity at 2. 
-  rewrite -> and_distributivity.
-  rewrite -> fold_associativity. 
-  simpl.
+  rewrite -> plus_commutativity with (fold_right plus (map2 and t1 t) cf) (plus (and h0 h) (fold_right plus (map2 and t0 t) cg)).
+  rewrite -> plus_associativity.
+  rewrite -> plus_commutativity with (fold_right plus (map2 and t0 t) cg) (fold_right plus (map2 and t1 t) cf).
+  rewrite IHn.
+  rewrite <- plus_associativity.
+  rewrite and_commutativity at 1.
+  rewrite and_commutativity with h0 h.
+  rewrite <- and_distributivity.
+  rewrite and_commutativity.
+  reflexivity.
 Qed.
 
 Theorem poly_plus_c_is_linear: 
