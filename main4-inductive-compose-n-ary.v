@@ -507,29 +507,6 @@ Lemma and_false_c:
     reflexivity.
   Qed.
 
-
-(*Load lambda_rewrite.*)
-
-Lemma and_true_c_lambda:
-  forall (x: Bool),
-  (fun x : Bool => and x BTrue) = (fun x: Bool => x).
-  Proof.
-    (*intros.
-    setoid_rewrite -> and_true_c.
-    reflexivity.
-  Qed.*)
-  Admitted.
-
-Lemma and_false_c_lambda:
-  forall (x: Bool),
-  (fun x: Bool => and x BFalse) = (fun x: Bool => BFalse).
-  Proof.
-    (*intros.
-    setoid_rewrite -> and_false_c.
-    reflexivity.
-  Qed.*)
-  Admitted.
-
 Theorem fold_associativity: forall {n: nat} (c: Bool) (xs: t Bool n),
   fold_right plus xs c = plus c (fold_right plus xs BFalse).
 Proof.
@@ -601,20 +578,42 @@ destruct x, y, z;
 unfold and; reflexivity.
 Qed.
 
-(*Lemma and_unmap:
-  forall {n: nat} (cs: t Bool n),
-  map (fun x : Bool => x) cs = cs.
-  Proof.
-  intros.
-  Admitted.*)
-
 Lemma and_true_unmap:
   forall {n: nat} (cs: t Bool n),
   map (fun x : Bool => and x BTrue) cs = cs.
   Proof.
     intros.
+    induction n.
+    rewrite Vector_0_is_nil.
+    rewrite (Vector_0_is_nil Bool cs).
+    simpl. reflexivity.
+    apply (caseS' cs).
+    intros.
+    simpl.
+    rewrite IHn.
+    destruct h;
+    unfold and;
+    reflexivity.
+  Qed.
 
-  Admitted.
+Lemma and_false_unmap:
+  forall {n: nat} (xs: t Bool n),
+  map (fun x : Bool => and x BFalse) xs = (t_n Bool n BFalse).
+  Proof.
+    intros.
+    induction n.
+    rewrite Vector_0_is_nil.
+    rewrite (Vector_0_is_nil Bool xs).
+    simpl. reflexivity.
+    apply (caseS' xs).
+    intros.
+    simpl.
+    rewrite IHn.
+    destruct h;
+    unfold and;
+    reflexivity.
+  Qed.
+
 
 (*distributivity*)
 (*mult c (plus a b) = plus (nult c a) (mult c b)*)
@@ -635,6 +634,40 @@ Lemma and_distributivity:
   Qed. 
 
 
+Theorem map2_and_t_false_is_false:
+  forall {n: nat} (xs: t Bool n),
+  map2 and (t_n Bool n BFalse) xs = t_n Bool n BFalse.
+  Proof.
+    intros.
+    induction n.
+    rewrite (Vector_0_is_nil Bool xs).
+    simpl.
+    reflexivity.
+    apply (caseS' xs).
+    intros.
+    simpl.
+    rewrite IHn.
+    destruct h;
+    unfold and;
+    reflexivity.
+  Qed.
+
+
+Theorem foldr_plus_t_false_x_is_x:
+  forall {n : nat},
+  forall (c: Bool),
+  fold_right plus (t_n Bool n BFalse) c = c.
+  Proof.
+    intros.
+    induction n.
+    simpl.
+    reflexivity.
+    simpl.
+    rewrite IHn.
+    rewrite plus_commutativity.
+    rewrite plus_false_c.
+    reflexivity.
+  Qed.
 
 Lemma polynom_with_falses_reults_false:
   forall {n: nat} (cs cx: t Bool n),
@@ -642,8 +675,29 @@ Lemma polynom_with_falses_reults_false:
   Proof.
     intros.
     unfold compute_polynom.
-    unfold plus.
-  Admitted.
+    rewrite and_false_unmap.
+    rewrite map2_and_t_false_is_false.
+    rewrite foldr_plus_t_false_x_is_x.
+    reflexivity.
+  Qed.
+
+Lemma map2_plus_t_false_x_is_x:
+  forall {n : nat},
+  forall (xs: t Bool n),
+  map2 plus (t_n Bool n BFalse) xs = xs.
+  Proof.
+    intros.
+    induction n.
+    rewrite (Vector_0_is_nil Bool xs).
+    simpl. reflexivity.
+    apply (caseS' xs).
+    intros.
+    simpl.
+    rewrite IHn.
+    destruct h;
+    unfold plus;
+    reflexivity.
+  Qed.
 
 Theorem poly_and_c_is_poly: 
 forall (n: nat),
@@ -710,6 +764,137 @@ Proof.
   reflexivity.
 Qed.
 
+Theorem linear_is_compose_closed: compose_closed linear.
+  Proof.
+    apply (compose_is_c).
+    intros.
+    apply case0.
+
+induction m.
+rewrite (Vector_0_is_nil (t Bool n -> Bool) gs).
+unfold compose.
+simpl.
+apply (of_coefficients n (fun _ : t Bool n => f []) (f []) (t_n Bool (n) BFalse)).
+intros.
+unfold compute_polynom.
+simpl.
+rewrite map2_and_t_false_is_false.
+induction n.
+simpl.
+reflexivity.
+simpl.
+
+rewrite foldr_plus_t_false_x_is_x.
+rewrite plus_commutativity.
+rewrite plus_false_c.
+reflexivity.
+
+rewrite IHm.
+
+
+apply (of_coefficients (n) (fun _ : t Bool (n) => compute_polynom c cs []) c (t_n Bool (n) BFalse)).
+
+
+apply functional_extensionality in H.
+induction H0.
+
+apply eq_sym in H.
+rewrite H.
+unfold compose.
+simpl.
+apply (of_coefficients (n) (fun _ : t Bool (n) => compute_polynom c cs []) c (t_n Bool (n) BFalse)).
+intros.
+apply eq_sym.
+rewrite (Vector_0_is_nil Bool cs).
+unfold compute_polynom.
+simpl.
+rewrite map2_and_t_false_is_false.
+induction n.
+simpl.
+
+reflexivity.
+simpl.
+rewrite <- IHn.
+rewrite plus_commutativity.
+rewrite plus_false_c.
+reflexivity.
+exact (tl xs).
+induction IHForall.
+apply IHForall.
+
+
+apply (caseS' (t_n Bool (S n) BFalse)).
+intros.
+simpl.
+unfold and.
+simpl.
+unfold plus.
+simpl.
+unfold plus.
+simpl.
+induction n.
+apply (of_coefficients 0 (fun _ : t Bool 0 => compute_polynom c cs []) c []).
+apply case0.
+rewrite (Vector_0_is_nil Bool cs).
+reflexivity.
+apply (of_coefficients (S n) (fun _ : t Bool (S n) => compute_polynom c cs []) c (t_n Bool (S n) BFalse)).
+simpl.
+unfold compute_polynom.
+simpl.
+
+
+
+induction H0.
+simpl.
+apply (of_coefficients n (fun _ : t Bool n => compute_polynom c cs []) c (t_n Bool n BTrue)).
+induction n.
+apply case0.
+simpl.
+rewrite (Vector_0_is_nil Bool cs).
+reflexivity.
+simpl.
+apply caseS'.
+simpl.
+
+unfold compose.
+
+apply (polynom_and_vector_computation_composition_is_linear n m f gs).
+
+Qed.
+
+
+
+Theorem linear_is_compose_closed: compose_closed linear.
+  Proof.
+    apply (compose_is_c).
+    intros.
+    unfold compose.
+
+    simpl.
+    induction H0.
+    simpl.
+    induction n.
+    rewrite H.
+    rewrite (Vector_0_is_nil Bool f).
+    apply case0.
+    induction n.
+    unfold compose.
+    simpl.
+
+
+    apply functional_extensionality.
+    intros.
+    unfold compose.
+    simpl.
+    
+    rewrite (Vector_0_is_nil Bool f).
+    rewrite functional_extensionality.
+    apply functional_extensionality.
+    apply linear.
+
+
+  Qed.
+
 Theorem poly_plus_c_is_linear: 
 forall (n: nat),
 forall (cs: t Bool n),
@@ -736,9 +921,6 @@ apply (of_coefficients
       ).
 auto.
 Qed.
-
-
-
 
 Theorem poly_plus_poly_is_linear:
 forall (n m: nat), 
@@ -800,59 +982,3 @@ Admitted.
 
 Check polynom_and_vector_computation_composition_is_linear.*)
 
-Theorem linear_is_compose_closed: compose_closed linear.
-Proof.
-apply (compose_is_c).
-intros.
-induction H.
-apply functional_extensionality in H.
-induction H0.
-
-apply eq_sym in H.
-rewrite H.
-unfold compose.
-simpl.
-apply (of_coefficients (n) (fun _ : t Bool (n) => compute_polynom c cs []) c (t_n Bool (n) BFalse)).
-intros.
-apply eq_sym.
-rewrite (Vector_0_is_nil Bool cs).
-unfold compute_polynom.
-simpl.
-induction xs.
-simpl.
-reflexivity.
-unfold and.
-simpl.
-unfold plus.
-simpl.
-unfold plus.
-simpl.
-induction n.
-apply (of_coefficients 0 (fun _ : t Bool 0 => compute_polynom c cs []) c []).
-apply case0.
-rewrite (Vector_0_is_nil Bool cs).
-reflexivity.
-apply (of_coefficients (S n) (fun _ : t Bool (S n) => compute_polynom c cs []) c (t_n Bool (S n) BFalse)).
-simpl.
-unfold compute_polynom.
-simpl.
-
-
-
-induction H0.
-simpl.
-apply (of_coefficients n (fun _ : t Bool n => compute_polynom c cs []) c (t_n Bool n BTrue)).
-induction n.
-apply case0.
-simpl.
-rewrite (Vector_0_is_nil Bool cs).
-reflexivity.
-simpl.
-apply caseS'.
-simpl.
-
-unfold compose.
-
-apply (polynom_and_vector_computation_composition_is_linear n m f gs).
-
-Qed.
