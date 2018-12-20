@@ -1,5 +1,11 @@
- Require Import Vector.
+Require Import Vector.
 Require Import Arith.
+
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Setoids.Setoid.
+Require Import Coq.Classes.Morphisms.
+
+Generalizable All Variables.
 
 Inductive Bool: Prop :=
   BTrue: Bool | BFalse: Bool.
@@ -381,6 +387,7 @@ Definition compute_polynom {n: nat} (c: Bool) (cs: t Bool n) (xs: t Bool n): Boo
 Inductive linear (n: nat) (f: t Bool n -> Bool): Prop :=
   of_coefficients: 
     forall (c: Bool) (cs: t Bool n),
+      (* TODO: simpler: compute_polynom c cs = f *)
       (forall (xs: t Bool n), compute_polynom c cs xs = f xs) 
         -> linear n f.
 
@@ -816,9 +823,40 @@ Theorem linear_is_compose_closed: compose_closed linear.
     unfold compose.
     apply (H []).
     unfold compose.
-    
+    simpl.
     induction H.
+    apply functional_extensionality in H.
     rewrite <- H.
+    induction H0.
+    apply functional_extensionality in H0.
+    rewrite <- H0.
+    unfold compute_polynom.
+    (* we need to obtain 
+
+        compose ??? v
+
+          from the
+
+        (fun xs : t Bool (S n) =>
+           fold_right plus
+             (map2 and cs (fold_right plus (map2 and cs0 xs) c0 :: map (fun g : t Bool (S n) -> Bool => g xs) v)) c)
+
+              part of goal
+
+                and this ma be possible after presenting cs as head and tail
+
+        then IHForall will bbecome applicable
+        
+     *)
+    apply IHForall.
+    destruct c.
+    destruct c0.
+    simpl.
+    induction H0.
+    setoid_rewrite <- H0.
+    induction H.
+    assumption.
+    setoid_rewrite <- H.
     induction H0.
     apply (of_coefficients 
       (S n)
