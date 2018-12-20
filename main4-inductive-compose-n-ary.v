@@ -1,4 +1,4 @@
-Require Import Vector.
+ Require Import Vector.
 Require Import Arith.
 
 Inductive Bool: Prop :=
@@ -13,7 +13,10 @@ Fixpoint t_n (A: Type) (n: nat) (x: A): t A n :=
 Inductive preserves_false (n: nat) (f: t Bool n -> Bool) := 
   preserves: (f(t_n Bool n BFalse) = BFalse) -> preserves_false n f.
 
-Definition compose {m: nat} {n: nat} (f: t Bool m -> Bool) (gs: t (t Bool n -> Bool) m) (xs: t Bool n) : Bool :=
+Definition compose {m: nat} {n: nat} 
+                   (f: t Bool m -> Bool) 
+                   (gs: t (t Bool n -> Bool) m) 
+                   (xs: t Bool n) : Bool :=
   f (map ( fun (g: t Bool n -> Bool) => g xs ) gs).
 
 Lemma preserves_false_vector: forall {n: nat} {m: nat} (gs: t (t Bool n -> Bool) m),
@@ -764,32 +767,171 @@ Proof.
   reflexivity.
 Qed.
 
+    Check compose.
+
 Theorem linear_is_compose_closed: compose_closed linear.
   Proof.
     apply (compose_is_c).
     intros.
-    apply case0.
+    induction n.
+    induction H0.
+    unfold compose.
+    apply (of_coefficients 0 (fun _ : t Bool 0 => f []) (f []) []).
+    intros.
+    rewrite (Vector_0_is_nil Bool xs).
+    unfold compute_polynom.
+    simpl.
+    reflexivity.
+    unfold compose.
+    induction H.
+    apply (of_coefficients 
+      0 
+      (fun xs : t Bool 0 => f (map (fun g : t Bool 0 -> Bool => g xs) (x :: v)))
+      (fold_right plus (map2 and cs (map (fun g : t Bool 0 -> Bool => g []) (x :: v))) c)
+      []
+    ).
+    intros.
+    rewrite (Vector_0_is_nil Bool xs).
+    unfold compute_polynom.
+    simpl.
+    rewrite <- (H (x [] :: (map (fun g : t Bool 0 -> Bool => g []) v))).
+    unfold compute_polynom.
+    reflexivity.
+    induction H0.
+    unfold compose.
+    simpl.
+    induction H.
+    rewrite (Vector_0_is_nil Bool cs) in H.
+    apply (of_coefficients 
+      (S n)
+      (fun _ : t Bool (S n) => f [])
+      c
+      (t_n Bool (S n) BFalse)
+    ).
+    intros.
+    unfold compute_polynom.
+    rewrite -> map2_and_t_false_is_false. 
+    rewrite -> foldr_plus_t_false_x_is_x. 
+    simpl.
+    unfold compose.
+    apply (H []).
+    unfold compose.
+    
+    induction H.
+    rewrite <- H.
+    induction H0.
+    apply (of_coefficients 
+      (S n)
+      (fun xs : t Bool (S n) => f (map (fun g : t Bool (S n) -> Bool => g xs) (x :: v)))
+      (fold_right plus (map2 and (tl cs) ()) (plus c (and (hd cs) c0)) )
+      (t_n Bool (S n) BFalse)
+    ).
 
-induction m.
-rewrite (Vector_0_is_nil (t Bool n -> Bool) gs).
-unfold compose.
-simpl.
-apply (of_coefficients n (fun _ : t Bool n => f []) (f []) (t_n Bool (n) BFalse)).
-intros.
-unfold compute_polynom.
-simpl.
-rewrite map2_and_t_false_is_false.
-induction n.
-simpl.
-reflexivity.
-simpl.
 
-rewrite foldr_plus_t_false_x_is_x.
-rewrite plus_commutativity.
-rewrite plus_false_c.
-reflexivity.
 
-rewrite IHm.
+
+Theorem linear_is_compose_closed: compose_closed linear.
+  Proof.
+    apply (compose_is_c).
+    intros.
+   
+    induction n.
+    induction m.
+    rewrite (Vector_0_is_nil (t Bool 0 -> Bool) gs).
+    unfold compose.
+    simpl.        
+    apply (of_coefficients 0 (fun _ : t Bool 0 => f []) (f []) []).
+    intros.
+    rewrite (Vector_0_is_nil Bool xs).
+    unfold compute_polynom.
+    simpl.
+    reflexivity.
+    induction H.
+    unfold compose.
+    apply (of_coefficients 
+      0 
+      (fun xs : t Bool 0 => f (map (fun g : t Bool 0 -> Bool => g xs) gs))
+      (fold_right plus (map2 and cs (map (fun g : t Bool 0 -> Bool => g []) gs)) c)
+      []
+    ).
+    intros.
+    rewrite (Vector_0_is_nil Bool xs).
+    unfold compute_polynom.
+    simpl.
+    rewrite <- (H (map (fun g : t Bool 0 -> Bool => g []) gs)).
+    unfold compute_polynom.
+    simpl.
+    reflexivity.
+    induction m.
+    rewrite (Vector_0_is_nil (t Bool (S n) -> Bool) gs).
+    unfold compose.
+    simpl.
+    induction H.
+    rewrite (Vector_0_is_nil Bool cs) in H.
+    apply (of_coefficients 
+      (S n)
+      (fun _ : t Bool (S n) => f [])
+      c
+      (t_n Bool (S n) BFalse)
+    ).
+    intros.
+    unfold compute_polynom.
+    rewrite -> map2_and_t_false_is_false. 
+    rewrite -> foldr_plus_t_false_x_is_x. 
+    simpl.
+    apply (H []).
+
+    unfold compose.
+    induction H.
+    induction H0.
+    admit.
+    rewrite <- H.
+    apply  
+    simpl.
+    rewrite case0 in H.
+    apply H.
+    destruct H0.
+    induction IHm.
+
+    rewrite (Vector_0_is_nil (t Bool n -> Bool) gs).
+    unfold compose.
+    simpl.
+    apply (of_coefficients n (fun _ : t Bool n => f []) (f []) (t_n Bool (n) BFalse)).
+    intros.
+    unfold compute_polynom.
+    simpl.
+    rewrite map2_and_t_false_is_false.
+    induction n.
+    simpl.
+    reflexivity.
+    simpl.
+    rewrite foldr_plus_t_false_x_is_x.
+    rewrite plus_commutativity.
+    rewrite plus_false_c.
+
+    reflexivity.
+
+
+    assumption .
+    apply functional_extensionality in IHm.
+    induction gs.
+    apply (of_coefficients n (fun _ : t Bool n => f []) (f []) (t_n Bool (n) BFalse)).
+    intros.
+    unfold compute_polynom.
+    rewrite map2_and_t_false_is_false.
+    rewrite -> foldr_plus_t_false_x_is_x. 
+    reflexivity.
+    apply functional_extensionality in H0.
+    induction H0. 
+    rewrite (Vector_0_is_nil gs).
+
+    apply (caseS' gs).
+    simpl.
+    rewrite IHm.
+    unfold compose.
+    rewrite (Vector_0_is_nil gs).
+    simpl.
+    rewrite <- IHm.
 
 
 apply (of_coefficients (n) (fun _ : t Bool (n) => compute_polynom c cs []) c (t_n Bool (n) BFalse)).
