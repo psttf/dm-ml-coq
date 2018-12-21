@@ -410,6 +410,15 @@ Proof.
 destruct v; auto.
 Qed.
 
+Lemma deconstruct_vector' : forall T n (v : Vector.t T n),
+match n return Vector.t T n -> Prop with
+| O => fun v => v = Vector.nil T
+| S n0 => fun v => v = Vector.cons T (hd v) n0 (tl v)
+end v.
+Proof.
+destruct v; auto.
+Qed.
+
 Theorem Vector_0_is_nil : forall T (v : Vector.t T 0), v = Vector.nil T.
 Proof.
 intros; apply (Vector_0_is_nil' _ _ v).
@@ -774,7 +783,11 @@ Proof.
   reflexivity.
 Qed.
 
-    Check compose.
+Check cons.
+
+Check t Bool 3.
+
+Check ex.
 
 Theorem linear_is_compose_closed: compose_closed linear.
   Proof.
@@ -848,7 +861,45 @@ Theorem linear_is_compose_closed: compose_closed linear.
         then IHForall will bbecome applicable
         
      *)
-    apply IHForall.
+    rewrite (deconstruct_vector' Bool (S n0) cs).
+    simpl.
+    unfold compose in IHForall.
+    (* 
+      now in goal we have
+
+      linear (S n)
+        (fun xs : t Bool (S n) =>
+          plus (and (hd cs) (fold_right plus (map2 and cs0 xs) c0))
+            (fold_right plus 
+              (map2
+                and
+                (tl cs) 
+                (map (fun g : t Bool (S n) -> Bool => g xs) v)
+              ) 
+              c))
+
+      and in IHForall we have
+
+      linear (S n) 
+        (fun xs : t Bool (S n) => 
+          f 
+           (map (fun g : t Bool (S n) -> Bool => g xs) v))
+
+      IHForall with 
+          f = fun (vxs: t Bool n0) => plus (and (hd cs) (fold_right plus (map2 and cs0 xs) c0))
+            (fold_right plus 
+              (map2
+                and
+                (tl cs) 
+                vxs
+              ) 
+              c)
+      matches the goal. In order to apply IHForall we need to show that such f is linear 
+      (thus providing the required value of type `linear n0 f`). This should be simple since
+      such f is exactly a polynomial of coefficients `c` and `tl cs`.
+
+    *)
+    apply IHForall. (* ??? *)
     destruct c.
     destruct c0.
     simpl.
