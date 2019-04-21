@@ -793,16 +793,15 @@ Theorem linear_is_compose_closed: compose_closed linear.
   Proof.
     apply (compose_is_c).
     intros.
+    unfold compose.
     induction n.
     induction H0.
-    unfold compose.
     apply (of_coefficients 0 (fun _ : t Bool 0 => f []) (f []) []).
     intros.
     rewrite (Vector_0_is_nil Bool xs).
     unfold compute_polynom.
     simpl.
     reflexivity.
-    unfold compose.
     induction H.
     apply (of_coefficients 
       0 
@@ -817,8 +816,7 @@ Theorem linear_is_compose_closed: compose_closed linear.
     rewrite <- (H (x [] :: (map (fun g : t Bool 0 -> Bool => g []) v))).
     unfold compute_polynom.
     reflexivity.
-    induction H0.
-    unfold compose.
+    induction H0 as [|m].
     simpl.
     induction H.
     rewrite (Vector_0_is_nil Bool cs) in H.
@@ -832,10 +830,7 @@ Theorem linear_is_compose_closed: compose_closed linear.
     unfold compute_polynom.
     rewrite -> map2_and_t_false_is_false. 
     rewrite -> foldr_plus_t_false_x_is_x. 
-    simpl.
-    unfold compose.
     apply (H []).
-    unfold compose.
     simpl.
     induction H.
     apply functional_extensionality in H.
@@ -859,11 +854,35 @@ Theorem linear_is_compose_closed: compose_closed linear.
                 and this ma be possible after presenting cs as head and tail
 
         then IHForall will bbecome applicable
-        
      *)
-    rewrite (deconstruct_vector' Bool (S n0) cs).
+    rewrite (deconstruct_vector' Bool (S m) cs).
     simpl.
-    unfold compose in IHForall.
+    Check (
+      fun (vxs: t Bool (S n)) => 
+        plus 
+          (and (hd cs) (fold_right plus (map (fun g : t Bool (S n) -> Bool => g vxs) v) c0))
+          (fold_right plus (map2 and (tl cs) (map (fun g => g vxs) v)) c)
+    ).
+    cut (linear m (
+      fun (vxs: t Bool m) => 
+        plus 
+          (and (hd cs) (fold_right plus vxs c0))
+          (fold_right plus (map2 and (tl cs) vxs) c)
+    )).
+    intro.
+    Check (fun xs : t Bool (S n) => map (fun g : t Bool (S n) -> Bool => g xs) v).
+    cut (
+      fun xs : t Bool (S n) => (
+        (map (fun g : t Bool (S n) -> Bool => g xs) v) =
+        (map2 and cs0 xs)
+      )
+    ).
+    apply (IHForall (fun vxs : t Bool m =>
+        plus (and (hd cs) (fold_right plus vxs c0)) 
+        (fold_right plus (map2 and (tl cs) vxs) c))).
+    admit.
+    
+
     (* 
       now in goal we have
 
@@ -873,9 +892,9 @@ Theorem linear_is_compose_closed: compose_closed linear.
             (fold_right plus 
               (map2
                 and
-                (tl cs) 
+                (tl cs)
                 (map (fun g : t Bool (S n) -> Bool => g xs) v)
-              ) 
+              )
               c))
 
       and in IHForall we have
@@ -892,13 +911,21 @@ Theorem linear_is_compose_closed: compose_closed linear.
                 and
                 (tl cs) 
                 vxs
-              ) 
+              )
               c)
       matches the goal. In order to apply IHForall we need to show that such f is linear 
       (thus providing the required value of type `linear n0 f`). This should be simple since
       such f is exactly a polynomial of coefficients `c` and `tl cs`.
 
     *)
+    cut (linear n0 (fun (vxs: t Bool n0) => plus (and (hd cs) (fold_right plus (map2 and cs0 vxs) c0))
+            (fold_right plus 
+              (map2
+                and
+                (tl cs) 
+                vxs
+              ) 
+              c))).
     apply IHForall. (* ??? *)
     destruct c.
     destruct c0.
