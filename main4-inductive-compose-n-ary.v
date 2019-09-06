@@ -911,6 +911,26 @@ Proof.
   apply poly_plus_poly_is_poly.
 Qed.
 
+Lemma fold_map2_false:
+forall n: nat, forall cs: t Bool (S n), forall xs: (t Bool n), forall c: Bool,
+fold_right plus (map2 and cs (BFalse::xs)) c = fold_right plus (map2 and (tl cs) xs) c.
+Proof.
+  intros.
+  cut ((map2 and cs (BFalse :: xs))=(BFalse :: map2 and (tl cs) (xs))).
+  2:{
+    apply (caseS' cs).
+    intuition.
+    simpl.
+    rewrite and_commutativity. rewrite and_false_c.
+    auto.
+  }
+  intros.
+  rewrite H.
+  simpl.
+  apply plus_false_c.
+Qed.
+
+
 Theorem linear_is_compose_closed: compose_closed linear.
   Proof.
     apply (compose_is_c).
@@ -1019,317 +1039,37 @@ Check fun (ar: t Bool (S n)) => plus (and (hd cs) (x ar))
     easy.
     intros.
     rewrite <- H in IHn.
-    set (ef:=(compute_polynom BFalse (t_n Bool n BFalse))).
-    
-    Check Forall_cons (fun g : t Bool n -> Bool => linear n g) ef gs
-(of_coefficients n ef BFalse (t_n Bool n BFalse)).
-    Check ((Forall_cons ).
-    Check (IHn ((compute_polynom BFalse (t_n Bool n BFalse) )::gs) ).
-2:{
-    exact IHn. 
-}
 
-    
-
-
-
-    set (f2:=(fun xs: t Bool m => (compute_polynom c (tl cs) xs))).
-    set (H4:=IHForall f2 (of_coefficients m f2 c (tl cs))).
-    set (ff:=(fun xs: t Bool m => ( fold_right plus (map2 and (tl cs) xs) c))).
-    cut (forall xs: t Bool m ,ff xs = compute_polynom c (tl cs) xs).
-Focus 2.
-    unfold compute_polynom.
-    auto. intros. intuition.
-
-    cut (linear m (
-      fun (vxs: t Bool m) => 
-        plus 
-          (and (hd cs) (fold_right plus vxs c0))
-          (fold_right plus (map2 and (tl cs) vxs) c)
-    )).
-    intro.
-    Check (fun xs : t Bool (S n) => map (fun g : t Bool (S n) -> Bool => g xs) v).
-(*    
-
-    cut (
-      fun xs : t Bool (S n) => (
-        (map (fun g : t Bool (S n) -> Bool => g xs) v) =
-        (map2 and cs0 xs)
-      )
-    ).
-*)
-    admit.
-    
-
-    (* 
-      now in goal we have
-
-      linear (S n)
-        (fun xs : t Bool (S n) =>
-          plus (and (hd cs) (fold_right plus (map2 and cs0 xs) c0))
-            (fold_right plus 
-              (map2
-                and
-                (tl cs)
-                (map (fun g : t Bool (S n) -> Bool => g xs) v)
-              )
-              c))
-
-      and in IHForall we have
-
-      linear (S n) 
-        (fun xs : t Bool (S n) => 
-          f 
-           (map (fun g : t Bool (S n) -> Bool => g xs) v))
-
-      IHForall with 
-          f = fun (vxs: t Bool n0) => plus (and (hd cs) (fold_right plus (map2 and cs0 xs) c0))
-            (fold_right plus 
-              (map2
-                and
-                (tl cs) 
-                vxs
-              )
-              c)
-      matches the goal. In order to apply IHForall we need to show that such f is linear 
-      (thus providing the required value of type `linear m f`). This should be simple since
-      such f is exactly a polynomial of coefficients `c` and `tl cs`.
-
-    *)
-    cut (linear n0 (fun (vxs: t Bool n0) => plus (and (hd cs) (fold_right plus (map2 and cs0 vxs) c0))
-            (fold_right plus 
-              (map2
-                and
-                (tl cs) 
-                vxs
-              ) 
-              c))).
-    apply IHForall. (* ??? *)
-    destruct c.
-    destruct c0.
-    simpl.
-    induction H0.
-    setoid_rewrite <- H0.
-    induction H.
-    assumption.
-    setoid_rewrite <- H.
-    induction H0.
-    apply (of_coefficients 
-      (S n)
-      (fun xs : t Bool (S n) => f (map (fun g : t Bool (S n) -> Bool => g xs) (x :: v)))
-      (fold_right plus (map2 and (tl cs) ()) (plus c (and (hd cs) c0)) )
-      (t_n Bool (S n) BFalse)
-    ).
-
-
-
-
-Theorem linear_is_compose_closed: compose_closed linear.
-  Proof.
-    apply (compose_is_c).
+    cut (linear n (compute_polynom BFalse (t_n Bool n BFalse))).
+    2:{
+      apply (of_coefficients n (compute_polynom BFalse (t_n Bool n BFalse)) BFalse (t_n Bool n BFalse)).
+      intuition.
+    }
     intros.
-   
-    induction n.
-    induction m.
-    rewrite (Vector_0_is_nil (t Bool 0 -> Bool) gs).
-    unfold compose.
-    simpl.        
-    apply (of_coefficients 0 (fun _ : t Bool 0 => f []) (f []) []).
+    set (H6:= IHn ((compute_polynom BFalse (t_n Bool n BFalse))::gs)
+ (Forall_cons (fun g : t Bool n -> Bool => linear n g) (compute_polynom BFalse (t_n Bool n BFalse)) gs H5 H4)).
+    simpl in H6.
+    cut (forall xs:t Bool n, (compute_polynom BFalse (t_n Bool n BFalse)) xs = BFalse).
+    2:{
+      intros.
+      unfold compute_polynom.
+      rewrite map2_and_t_false_is_false.
+      apply foldr_plus_t_false_x_is_x.
+    }
     intros.
-    rewrite (Vector_0_is_nil Bool xs).
-    unfold compute_polynom.
-    simpl.
-    reflexivity.
-    induction H.
-    unfold compose.
-    apply (of_coefficients 
-      0 
-      (fun xs : t Bool 0 => f (map (fun g : t Bool 0 -> Bool => g xs) gs))
-      (fold_right plus (map2 and cs (map (fun g : t Bool 0 -> Bool => g []) gs)) c)
-      []
-    ).
+    inversion H6.
+    apply (of_coefficients n 
+((fun xs : t Bool n => compute_polynom c (tl cs) (map (fun g : t Bool n -> Bool => g xs) gs)))
+    c1 cs1
+).
     intros.
-    rewrite (Vector_0_is_nil Bool xs).
+    rewrite H8.
+    rewrite H7.
     unfold compute_polynom.
-    simpl.
-    rewrite <- (H (map (fun g : t Bool 0 -> Bool => g []) gs)).
-    unfold compute_polynom.
-    simpl.
-    reflexivity.
-    induction m.
-    rewrite (Vector_0_is_nil (t Bool (S n) -> Bool) gs).
-    unfold compose.
-    simpl.
-    induction H.
-    rewrite (Vector_0_is_nil Bool cs) in H.
-    apply (of_coefficients 
-      (S n)
-      (fun _ : t Bool (S n) => f [])
-      c
-      (t_n Bool (S n) BFalse)
-    ).
-    intros.
-    unfold compute_polynom.
-    rewrite -> map2_and_t_false_is_false. 
-    rewrite -> foldr_plus_t_false_x_is_x. 
-    simpl.
-    apply (H []).
-
-    unfold compose.
-    induction H.
-    induction H0.
-    admit.
-    rewrite <- H.
-    apply  
-    simpl.
-    rewrite case0 in H.
-    apply H.
-    destruct H0.
-    induction IHm.
-
-    rewrite (Vector_0_is_nil (t Bool n -> Bool) gs).
-    unfold compose.
-    simpl.
-    apply (of_coefficients n (fun _ : t Bool n => f []) (f []) (t_n Bool (n) BFalse)).
-    intros.
-    unfold compute_polynom.
-    simpl.
-    rewrite map2_and_t_false_is_false.
-    induction n.
-    simpl.
-    reflexivity.
-    simpl.
-    rewrite foldr_plus_t_false_x_is_x.
-    rewrite plus_commutativity.
-    rewrite plus_false_c.
-
-    reflexivity.
-
-
-    assumption .
-    apply functional_extensionality in IHm.
-    induction gs.
-    apply (of_coefficients n (fun _ : t Bool n => f []) (f []) (t_n Bool (n) BFalse)).
-    intros.
-    unfold compute_polynom.
-    rewrite map2_and_t_false_is_false.
-    rewrite -> foldr_plus_t_false_x_is_x. 
-    reflexivity.
-    apply functional_extensionality in H0.
-    induction H0. 
-    rewrite (Vector_0_is_nil gs).
-
-    apply (caseS' gs).
-    simpl.
-    rewrite IHm.
-    unfold compose.
-    rewrite (Vector_0_is_nil gs).
-    simpl.
-    rewrite <- IHm.
-
-
-apply (of_coefficients (n) (fun _ : t Bool (n) => compute_polynom c cs []) c (t_n Bool (n) BFalse)).
-
-
-apply functional_extensionality in H.
-induction H0.
-
-apply eq_sym in H.
-rewrite H.
-unfold compose.
-simpl.
-apply (of_coefficients (n) (fun _ : t Bool (n) => compute_polynom c cs []) c (t_n Bool (n) BFalse)).
-intros.
-apply eq_sym.
-rewrite (Vector_0_is_nil Bool cs).
-unfold compute_polynom.
-simpl.
-rewrite map2_and_t_false_is_false.
-induction n.
-simpl.
-
-reflexivity.
-simpl.
-rewrite <- IHn.
-rewrite plus_commutativity.
-rewrite plus_false_c.
-reflexivity.
-exact (tl xs).
-induction IHForall.
-apply IHForall.
-
-
-apply (caseS' (t_n Bool (S n) BFalse)).
-intros.
-simpl.
-unfold and.
-simpl.
-unfold plus.
-simpl.
-unfold plus.
-simpl.
-induction n.
-apply (of_coefficients 0 (fun _ : t Bool 0 => compute_polynom c cs []) c []).
-apply case0.
-rewrite (Vector_0_is_nil Bool cs).
-reflexivity.
-apply (of_coefficients (S n) (fun _ : t Bool (S n) => compute_polynom c cs []) c (t_n Bool (S n) BFalse)).
-simpl.
-unfold compute_polynom.
-simpl.
-
-
-
-induction H0.
-simpl.
-apply (of_coefficients n (fun _ : t Bool n => compute_polynom c cs []) c (t_n Bool n BTrue)).
-induction n.
-apply case0.
-simpl.
-rewrite (Vector_0_is_nil Bool cs).
-reflexivity.
-simpl.
-apply caseS'.
-simpl.
-
-unfold compose.
-
-apply (polynom_and_vector_computation_composition_is_linear n m f gs).
-
+    apply fold_map2_false.
 Qed.
+Hint Resolve linear_is_compose_closed.
 
-
-
-Theorem linear_is_compose_closed: compose_closed linear.
-  Proof.
-    apply (compose_is_c).
-    intros.
-    unfold compose.
-
-    simpl.
-    induction H0.
-    simpl.
-    induction n.
-    rewrite H.
-    rewrite (Vector_0_is_nil Bool f).
-    apply case0.
-    induction n.
-    unfold compose.
-    simpl.
-
-
-    apply functional_extensionality.
-    intros.
-    unfold compose.
-    simpl.
-    
-    rewrite (Vector_0_is_nil Bool f).
-    rewrite functional_extensionality.
-    apply functional_extensionality.
-    apply linear.
-
-
-  Qed.
 
 Theorem poly_plus_c_is_linear: 
 forall (n: nat),
@@ -1341,6 +1081,7 @@ intros.
 apply (of_coefficients n (compute_polynom (plus c c0) cs) (plus c c0) cs).
 auto.
 Qed.
+Hint Resolve poly_plus_c_is_linear.
 
 Theorem poly_and_c_is_linear: 
 forall (n: nat),
@@ -1357,6 +1098,7 @@ apply (of_coefficients
       ).
 auto.
 Qed.
+Hint Resolve poly_and_c_is_linear.
 
 Theorem poly_plus_poly_is_linear:
 forall (n m: nat), 
@@ -1374,24 +1116,36 @@ apply (of_coefficients
       ).
 auto.
 Qed.
+Hint Resolve poly_plus_poly_is_linear.
+
 (*
 Lemma composition_of_polynoms_is_polynom: forall {n: nat} {m: nat} (gs: t Bool m -> Bool) (vect: t (t Bool n -> Bool) m),
   Forall (fun (g: t Bool n) => fun (b: Bool) => compute_polynom b g) gs -> 
     (map ( fun (g: t Bool n -> Bool) => g (t_n Bool n BFalse) ) gs) = (t_n Bool m BFalse).
 Proof.*)
 
-Theorem composition_of_polynoms_is_polynom:
+Theorem composition_of_polynoms_is_linear:
 forall (n m: nat),
 forall (csf: t Bool n), 
 forall (cf: Bool),
 forall (csg : t Bool m), 
 forall (cg : Bool),
-forall (csx: t Bool m), (*exists / linear*)
-forall (cx: Bool),
-compose (compute_polynom cf csf) (t_n (t Bool m -> Bool) n (compute_polynom cg csg)) = compute_polynom cx csx.
+linear m (compose (compute_polynom cf csf) (t_n (t Bool m -> Bool) n (compute_polynom cg csg))).
 Proof.
-intros.
-unfold compose.
+  intros.
+  unfold compose.
+  apply (
+      of_coefficients 
+                  m 
+  (fun xs : t Bool m => compute_polynom cf csf (map (fun g : t Bool m -> Bool => g xs) (t_n (t Bool m -> Bool) n (compute_polynom cg csg))))
+                  (fold_right plus (t_n Bool n cg) cf )
+                  (map2 and csg (t_n Bool m (fold_right plus csf BFalse)))
+  ).
+  intros.
+  simpl.
+  unfold compute_polynom.
+  rewrite fold_associativity.
+  
 Admitted.
 
 Check compute_polynom.
